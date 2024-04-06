@@ -104,3 +104,15 @@ async def add_inc_category_bd(tg_id:int, category: list):
     except IntegrityError:
         # Обработка ошибки нарушения уникальности, если она возникнет
         print(IntegrityError)
+
+
+'''Функция проверки, есть ли такой пользователь в БД'''
+
+
+async def check_user_exists(tg_id: int) -> bool:
+    async with async_session() as session:
+        # Выполняем запрос на проверку существования пользователя с заданным tg_id
+        user = await session.execute(select(UsersOrm.id).where(UsersOrm.tg_id == tg_id))
+        print(user)
+        # Проверяем, был ли найден пользователь
+        return bool(user.scalar())
