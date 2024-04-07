@@ -6,5 +6,6 @@ class FSMfinance(StatesGroup):
     old_operations = State()
     user_check = State()
 
+
 class FSMtest(StatesGroup):
     test = State()

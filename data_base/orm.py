@@ -49,6 +49,7 @@ async def add_users_bd(tg_id: int):
 async def add_exp_category_bd(tg_id:int, category):
     try:
         async with async_session() as session:
+
             user = await session.execute(select(UsersOrm.id).where(UsersOrm.tg_id == tg_id))
             user_id = user.scalar()
 
@@ -61,11 +62,19 @@ async def add_exp_category_bd(tg_id:int, category):
             # Наращиваем значение position на 1
             next_position = max_position + 1 if max_position else 1
 
-            # Создаем список объектов категорий доходов
-            categories_to_add = [
-                ExpCategoryORM(user_id=user_id, name=name, position=next_position + index)
-                for index, name in enumerate(category)
-            ]
+            categories_to_add = []
+            for index, item in enumerate(category):
+
+                name = item.split('-')
+                limit = None
+                if len(name) > 1:
+                    limit = name[-1]
+
+                category_obj = ExpCategoryORM(user_id=user_id,
+                                              name=name[0],
+                                              limit=limit,
+                                              position=next_position + index)
+                categories_to_add.append(category_obj)
 
             session.add_all(categories_to_add)
             await session.commit()
@@ -93,10 +102,17 @@ async def add_inc_category_bd(tg_id:int, category: list):
             next_position = max_position + 1 if max_position else 1
 
             # Создаем список объектов категорий доходов
-            categories_to_add = [
-                IncCategoryORM(user_id=user_id, name=name, position=next_position + index)
-                for index, name in enumerate(category)
-            ]
+            categories_to_add = []
+            for index, item in enumerate(category):
+                name = item.split('-')
+                limit = None
+                if len(name) > 1:
+                    limit = name[-1]
+                category_obj = IncCategoryORM(user_id=user_id,
+                                              name=name[0],
+                                              limit=limit,
+                                              position=next_position + index)
+                categories_to_add.append(category_obj)
 
             session.add_all(categories_to_add)
             await session.commit()
@@ -116,3 +132,17 @@ async def check_user_exists(tg_id: int) -> bool:
         print(user)
         # Проверяем, был ли найден пользователь
         return bool(user.scalar())
+
+
+'''Функция вывода всех категорий расходов'''
+async def get_exp_categories(tg_id: int) -> list:
+    async with (async_session() as session):
+
+        # Получаем список объектов категорий расходов
+        categories = await session.execute(
+            select(ExpCategoryORM.name)
+            .join(UsersOrm, UsersOrm.id == ExpCategoryORM.user_id)
+            .where(UsersOrm.tg_id == tg_id)
+        )
+
+        return [category.name for category in categories.all()]
