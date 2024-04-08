@@ -1,8 +1,10 @@
+from difflib import SequenceMatcher
+
 from data_base.database import async_session, engine_asinc, Base
 from sqlalchemy import select, func
 from sqlalchemy.exc import IntegrityError
 
-from data_base.models import UsersOrm, IncCategoryORM, ExpCategoryORM
+from data_base.models import UsersOrm, IncCategoryORM, ExpCategoryORM, ExpensesORM
 
 
 async def create_tables():
@@ -143,28 +145,86 @@ async def check_user_exists(tg_id: int) -> bool:
 '''Функция вывода всех категорий расходов'''
 
 async def get_exp_categories(tg_id: int) -> list:
-    async with (async_session() as session):
+    try:
+        async with (async_session() as session):
 
-        # Получаем список объектов категорий расходов
-        categories = await session.execute(
-            select(ExpCategoryORM.name)
-            .join(UsersOrm, UsersOrm.id == ExpCategoryORM.user_id)
-            .where(UsersOrm.tg_id == tg_id)
-        )
+            # Получаем список объектов категорий расходов
+            categories = await session.execute(
+                select(ExpCategoryORM.name)
+                .join(UsersOrm, UsersOrm.id == ExpCategoryORM.user_id)
+                .where(UsersOrm.tg_id == tg_id)
+            )
 
-        return [category.name for category in categories.all()]
+            return [category.name for category in categories.all()]
 
+    except IntegrityError:
+        # Обработка ошибки нарушения уникальности, если она возникнет
+        print(IntegrityError)
 
 '''Функция вывода всех категорий доходов'''
 
 async def get_inc_categories(tg_id: int) -> list:
-    async with (async_session() as session):
+    try:
+        async with (async_session() as session):
 
-        # Получаем список объектов категорий расходов
-        categories = await session.execute(
-            select(IncCategoryORM.name)
-            .join(UsersOrm, UsersOrm.id == IncCategoryORM.user_id)
-            .where(UsersOrm.tg_id == tg_id)
-        )
+            # Получаем список объектов категорий расходов
+            categories = await session.execute(
+                select(IncCategoryORM.name)
+                .join(UsersOrm, UsersOrm.id == IncCategoryORM.user_id)
+                .where(UsersOrm.tg_id == tg_id)
+            )
 
-        return [category.name for category in categories.all()]
+            return [category.name for category in categories.all()]
+
+    except IntegrityError:
+        # Обработка ошибки нарушения уникальности, если она возникнет
+        print(IntegrityError)
+
+
+'''Проверка есть ли такая категория расходов и если есть то добавляем'''
+
+async def check_and_add_user_category_exp(tg_id: int,
+                                      amount: float,
+                                      category: str,
+                                      comment: str):
+    try:
+        async with (async_session() as session):
+            # Получаем список объектов категорий расходов
+            categories = await session.execute(
+                select(ExpCategoryORM.name)
+                .join(UsersOrm, UsersOrm.id == ExpCategoryORM.user_id)
+                .where(UsersOrm.tg_id == tg_id)
+            )
+            categorys = [category.name for category in categories.all()]
+
+            for item in categorys:
+                if (SequenceMatcher(None, category.lower(), item.lower()).ratio() * 100) > 80:
+                    print(item)
+                    categories_id = await session.execute(
+                                        select(ExpCategoryORM.id)
+                                        .join(UsersOrm, UsersOrm.id == ExpCategoryORM.user_id)
+                                        .where(UsersOrm.tg_id == tg_id,
+                                               ExpCategoryORM.name == item)
+                                         )
+                    categories_id=categories_id.scalar()
+
+                    category_obj = ExpensesORM(expense_id=categories_id,
+                                               summ=amount,
+                                               comment=comment)
+
+                    session.add_all(category_obj)
+                    await session.commit()
+
+
+                    '''
+                    expense_id: Mapped[int] = mapped_column(ForeignKey("exp_category.id", ondelete="CASCADE"))
+    summ: Mapped[float] = mapped_column()
+    date: Mapped[datetime.datetime] = mapped_column(server_default=text("TIMEZONE('utc', now())"))
+    comment: Mapped[str]'''
+                    return True
+                else:
+                    return False
+
+    except IntegrityError:
+        # Обработка ошибки нарушения уникальности, если она возникнет
+        print(IntegrityError)
