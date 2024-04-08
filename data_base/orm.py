@@ -66,13 +66,16 @@ async def add_exp_category_bd(tg_id:int, category):
             for index, item in enumerate(category):
 
                 name = item.split('-')
-                limit = None
+                limit = 0
                 if len(name) > 1:
-                    limit = name[-1]
+                    try:
+                        limit = int(name[-1])
+                    except:
+                        limit = 0
 
                 category_obj = ExpCategoryORM(user_id=user_id,
                                               name=name[0],
-                                              limit=limit,
+                                              limit_summ=limit,
                                               position=next_position + index)
                 categories_to_add.append(category_obj)
 
@@ -105,12 +108,15 @@ async def add_inc_category_bd(tg_id:int, category: list):
             categories_to_add = []
             for index, item in enumerate(category):
                 name = item.split('-')
-                limit = None
+                limit = 0
                 if len(name) > 1:
-                    limit = name[-1]
+                    try:
+                        limit = int(name[-1])
+                    except:
+                        limit = 0
                 category_obj = IncCategoryORM(user_id=user_id,
                                               name=name[0],
-                                              limit=limit,
+                                              limit_summ=limit,
                                               position=next_position + index)
                 categories_to_add.append(category_obj)
 
@@ -135,6 +141,7 @@ async def check_user_exists(tg_id: int) -> bool:
 
 
 '''Функция вывода всех категорий расходов'''
+
 async def get_exp_categories(tg_id: int) -> list:
     async with (async_session() as session):
 
@@ -142,6 +149,21 @@ async def get_exp_categories(tg_id: int) -> list:
         categories = await session.execute(
             select(ExpCategoryORM.name)
             .join(UsersOrm, UsersOrm.id == ExpCategoryORM.user_id)
+            .where(UsersOrm.tg_id == tg_id)
+        )
+
+        return [category.name for category in categories.all()]
+
+
+'''Функция вывода всех категорий доходов'''
+
+async def get_inc_categories(tg_id: int) -> list:
+    async with (async_session() as session):
+
+        # Получаем список объектов категорий расходов
+        categories = await session.execute(
+            select(IncCategoryORM.name)
+            .join(UsersOrm, UsersOrm.id == IncCategoryORM.user_id)
             .where(UsersOrm.tg_id == tg_id)
         )
 

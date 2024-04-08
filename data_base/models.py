@@ -1,8 +1,7 @@
 import datetime
 
 from sqlalchemy.orm import Mapped, mapped_column
-from sqlalchemy.sql.sqltypes import BigInteger
-from sqlalchemy import text, ForeignKey
+from sqlalchemy import text, ForeignKey, BigInteger
 from data_base.database import Base
 
 # Объявляем классы таблиц
@@ -10,7 +9,7 @@ class UsersOrm(Base):
     __tablename__ = 'users'
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    tg_id: Mapped[int]
+    tg_id: Mapped[int] = mapped_column(BigInteger)
     subscription: Mapped[datetime.datetime] = mapped_column(server_default=text("TIMEZONE('utc', now())"))
 
 '''Таблица категории расходов'''
