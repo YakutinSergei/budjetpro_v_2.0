@@ -197,33 +197,35 @@ async def check_and_add_user_category_exp(tg_id: int,
             )
             categorys = [category.name for category in categories.all()]
 
-            for item in categorys:
-                if (SequenceMatcher(None, category.lower(), item.lower()).ratio() * 100) > 80:
-                    print(item)
-                    categories_id = await session.execute(
-                                        select(ExpCategoryORM.id)
-                                        .join(UsersOrm, UsersOrm.id == ExpCategoryORM.user_id)
-                                        .where(UsersOrm.tg_id == tg_id,
-                                               ExpCategoryORM.name == item)
-                                         )
-                    categories_id=categories_id.scalar()
+            if category:
+                for item in categorys:
+                    if (SequenceMatcher(None, category.lower(), item.lower()).ratio() * 100) > 80:
+                        print(item)
+                        categories_id = await session.execute(
+                                            select(ExpCategoryORM.id)
+                                            .join(UsersOrm, UsersOrm.id == ExpCategoryORM.user_id)
+                                            .where(UsersOrm.tg_id == tg_id,
+                                                   ExpCategoryORM.name == item)
+                                             )
+                        categories_id=int(categories_id.scalar())
+                        category_obj = ExpensesORM(expense_id=categories_id,
+                                                   summ=amount,
+                                                   comment=comment)
 
-                    category_obj = ExpensesORM(expense_id=categories_id,
-                                               summ=amount,
-                                               comment=comment)
-
-                    session.add_all(category_obj)
-                    await session.commit()
+                        session.add(category_obj)
+                        await session.commit()
 
 
-                    '''
-                    expense_id: Mapped[int] = mapped_column(ForeignKey("exp_category.id", ondelete="CASCADE"))
-    summ: Mapped[float] = mapped_column()
-    date: Mapped[datetime.datetime] = mapped_column(server_default=text("TIMEZONE('utc', now())"))
-    comment: Mapped[str]'''
-                    return True
-                else:
-                    return False
+                        '''
+                        expense_id: Mapped[int] = mapped_column(ForeignKey("exp_category.id", ondelete="CASCADE"))
+        summ: Mapped[float] = mapped_column()
+        date: Mapped[datetime.datetime] = mapped_column(server_default=text("TIMEZONE('utc', now())"))
+        comment: Mapped[str]'''
+                        return f'{item}`{categories_id}'
+            else:
+                return categorys
+
+            return categorys
 
     except IntegrityError:
         # Обработка ошибки нарушения уникальности, если она возникнет

@@ -1,9 +1,13 @@
+from datetime import datetime
+
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import StatesGroup, State
 from aiogram.types import Message
 
+from Bot_menu.menu import create_inline_kb
 from FSMstate.FSMstate import FSMfinance
 from Handlers.start_handlers import process_start_command
+from Lexicon.lexicon_ru import LEXICON_RU
 from data_base.orm import check_user_exists
 
 '''Функция проверки есть ли такой пользователь в базе'''
@@ -41,6 +45,37 @@ async def user_old_operations_check(state: FSMContext):
     else:  # Если нет последних добавлений, то
         await state.update_data(old_operations=False)  # Обновляем FSM
         return False
+
+
+'''Функция вывода сообщение о том что добавлена новая запись в расходы'''
+
+
+async def message_exp(check_category: str,
+                            amount: float,
+                            comment: str,
+                            message: Message):
+    date_value = datetime.now()
+    # Извлекаем день, месяц и год из значения даты
+    day = date_value.day
+    month = date_value.month
+    year = date_value.year
+
+    id_fin = check_category.split('`')[-1]
+
+    text = (f'✅Добавлено {amount} ₽ в источник доходов "{check_category}" \n'
+            f'Дата: <i>{day}/{month}/{year} г.</i>')
+
+    if comment != '':
+        comment = f'\n<i>{comment}</i>'
+
+    await message.answer(text=text + comment,
+                         reply_markup=await create_inline_kb(2,
+                                                             f"e_{id_fin}_",
+                                                             LEXICON_RU['date_fin'],
+                                                             LEXICON_RU['comment'],
+                                                             LEXICON_RU['change'],
+                                                             LEXICON_RU['cancel_fin'],
+                                                             ))
 
 
 '''Функция проверки на число'''
