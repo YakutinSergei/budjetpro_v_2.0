@@ -42,8 +42,6 @@ async def main():
     # Регистриуем роутеры в диспетчере
     dp.include_router(start_handlers.router)
     dp.include_router(financial_transactions_handlers.router)
-    # dp.include_router(edit_handlers.router)
-    # dp.include_router(add_finance_handlers.router)
 
 
 

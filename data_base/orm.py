@@ -4,7 +4,7 @@ from data_base.database import async_session, engine_asinc, Base
 from sqlalchemy import select, func
 from sqlalchemy.exc import IntegrityError
 
-from data_base.models import UsersOrm, IncCategoryORM, ExpCategoryORM, ExpensesORM
+from data_base.models import IncomesORM, UsersOrm, IncCategoryORM, ExpCategoryORM, ExpensesORM
 
 
 async def create_tables():
@@ -137,7 +137,6 @@ async def check_user_exists(tg_id: int) -> bool:
     async with async_session() as session:
         # Выполняем запрос на проверку существования пользователя с заданным tg_id
         user = await session.execute(select(UsersOrm.id).where(UsersOrm.tg_id == tg_id))
-        print(user)
         # Проверяем, был ли найден пользователь
         return bool(user.scalar())
 
@@ -200,7 +199,6 @@ async def check_and_add_user_category_exp(tg_id: int,
             if category:
                 for item in categorys:
                     if (SequenceMatcher(None, category.lower(), item.lower()).ratio() * 100) > 80:
-                        print(item)
                         categories_id = await session.execute(
                                             select(ExpCategoryORM.id)
                                             .join(UsersOrm, UsersOrm.id == ExpCategoryORM.user_id)
@@ -214,13 +212,50 @@ async def check_and_add_user_category_exp(tg_id: int,
 
                         session.add(category_obj)
                         await session.commit()
+                        return f'{item}`{categories_id}'
+            else:
+                return categorys
+
+            return categorys
+
+    except IntegrityError:
+        # Обработка ошибки нарушения уникальности, если она возникнет
+        print(IntegrityError)
 
 
-                        '''
-                        expense_id: Mapped[int] = mapped_column(ForeignKey("exp_category.id", ondelete="CASCADE"))
-        summ: Mapped[float] = mapped_column()
-        date: Mapped[datetime.datetime] = mapped_column(server_default=text("TIMEZONE('utc', now())"))
-        comment: Mapped[str]'''
+'''Проверка есть ли такая статья доходов и если есть то добавляем'''
+
+
+async def check_and_add_user_category_inc(tg_id: int,
+                                      amount: float,
+                                      category: str,
+                                      comment: str):
+    try:
+        async with (async_session() as session):
+            # Получаем список объектов категорий расходов
+            categories = await session.execute(
+                select(IncCategoryORM.name)
+                .join(UsersOrm, UsersOrm.id == IncCategoryORM.user_id)
+                .where(UsersOrm.tg_id == tg_id)
+            )
+            categorys = [category.name for category in categories.all()]
+
+            if category:
+                for item in categorys:
+                    if (SequenceMatcher(None, category.lower(), item.lower()).ratio() * 100) > 80:
+                        categories_id = await session.execute(
+                                            select(IncCategoryORM.id)
+                                            .join(UsersOrm, UsersOrm.id == IncCategoryORM.user_id)
+                                            .where(UsersOrm.tg_id == tg_id,
+                                                   IncCategoryORM.name == item)
+                                             )
+                        categories_id=int(categories_id.scalar())
+                        category_obj = IncomesORM(income_id=categories_id,
+                                                  summ=amount,
+                                                  comment=comment)
+
+                        session.add(category_obj)
+                        await session.commit()
                         return f'{item}`{categories_id}'
             else:
                 return categorys

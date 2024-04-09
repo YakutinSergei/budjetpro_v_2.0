@@ -36,9 +36,9 @@ async def user_check(message: Message, state: FSMContext, tg_id: int):
         else:
             return True
 
-
-
 '''Функция проверки что последнее добавляли'''
+
+
 async def user_old_operations_check(state: FSMContext):
     if 'old_operations' in FSMfinance:
         return FSMfinance['old_operations']
@@ -51,9 +51,40 @@ async def user_old_operations_check(state: FSMContext):
 
 
 async def message_exp(check_category: str,
-                            amount: float,
-                            comment: str,
-                            message: Message):
+                      amount: float,
+                      comment: str,
+                      message: Message):
+    date_value = datetime.now()
+    # Извлекаем день, месяц и год из значения даты
+    day = date_value.day
+    month = date_value.month
+    year = date_value.year
+
+    id_fin = check_category.split('`')[-1]
+
+    text = (f'✅Добавлено {amount} ₽ в категорию расходов "{check_category}" \n'
+            f'Дата: <i>{day}/{month}/{year} г.</i>')
+
+    if comment != '':
+        comment = f'\n<i>{comment}</i>'
+
+    await message.answer(text=text + comment,
+                         reply_markup=await create_inline_kb(2,
+                                                             f"e_{id_fin}_",
+                                                             LEXICON_RU['date_fin'],
+                                                             LEXICON_RU['comment'],
+                                                             LEXICON_RU['change'],
+                                                             LEXICON_RU['cancel_fin'],
+                                                             ))
+    
+
+'''Функция вывода сообщение о том что добавлена новая запись в доходы'''
+
+
+async def message_inc(check_category: str,
+                      amount: float,
+                      comment: str,
+                      message: Message):
     date_value = datetime.now()
     # Извлекаем день, месяц и год из значения даты
     day = date_value.day
@@ -76,7 +107,6 @@ async def message_exp(check_category: str,
                                                              LEXICON_RU['change'],
                                                              LEXICON_RU['cancel_fin'],
                                                              ))
-
 
 '''Функция проверки на число'''
 

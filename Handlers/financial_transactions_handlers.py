@@ -1,13 +1,13 @@
 import re
 
-from aiogram import Router,
+from aiogram import Router
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery
 
 from Bot_menu.menu import create_inline_kb
 from Lexicon.lexicon_ru import LEXICON_RU
-from data_base.orm import check_and_add_user_category_exp
-from module_functions.users_function import user_check
+from data_base.orm import check_and_add_user_category_exp, check_and_add_user_category_inc
+from module_functions.users_function import message_inc, user_check, message_exp
 
 router: Router = Router()
 
@@ -31,20 +31,16 @@ async def add_finance_user(message: Message, state: FSMContext):
             amount = float(amount_str.replace(',', '.')) # Преобразование цифры в тип float
 
             if sign == '-':         # Если прислали со знаком -
-                print('Расходы')
                 check_category = await check_and_add_user_category_exp(tg_id=tg_id,
                                                                        amount=amount,
                                                                        category=category,
                                                                        comment=comment)
 
                 if isinstance(check_category, str): # Добавили в категорию
-
-                    await print_mess_exp()
                     await message_exp(check_category=check_category,
-                                                amount=amout,
-                                                comment: str,
-                                                message: Message)
-
+                                      amount=amount,
+                                      comment=comment,
+                                      message=message)
 
                 else:
                     await message.answer(text=f'❔В какую категорию добавить {amount_str} ₽?',
@@ -53,16 +49,24 @@ async def add_finance_user(message: Message, state: FSMContext):
                                                                              *check_category,
                                                                              LEXICON_RU['category_user']))
 
-
-
-
-
             elif sign == '+':       # Если прислали со знаком +
-                print('Доходы')
-                # check_category = await check_and_add_user_category_inc(tg_id=tg_id,
-                #                                                        amount=amount,
-                #                                                        category=category,
-                #                                                        comment=comment)
+                check_category = await check_and_add_user_category_inc(tg_id=tg_id,
+                                                                       amount=amount,
+                                                                       category=category,
+                                                                       comment=comment)
+
+                if isinstance(check_category, str): # Добавили в категорию
+                    await message_inc(check_category=check_category,
+                                      amount=amount,
+                                      comment=comment,
+                                      message=message)
+
+                else:
+                    await message.answer(text=f'❔В какую категорию добавить {amount_str} ₽?',
+                                         reply_markup=await create_inline_kb(1,
+                                                                             f'i_{amount}_',
+                                                                             *check_category,
+                                                                             LEXICON_RU['category_user']))
             else:                   # Если прислали без знака
                 print('Без знака')
 
