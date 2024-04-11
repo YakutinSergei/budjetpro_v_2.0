@@ -7,7 +7,7 @@ from aiogram.types import Message, CallbackQuery
 from Bot_menu.menu import create_inline_kb
 from Lexicon.lexicon_ru import LEXICON_RU
 from data_base.orm import check_and_add_user_category_exp, check_and_add_user_category_inc
-from module_functions.users_function import message_inc, user_check, message_exp
+from module_functions.users_function import message_inc, user_check, message_exp, user_old_operations_check
 
 router: Router = Router()
 
@@ -69,6 +69,10 @@ async def add_finance_user(message: Message, state: FSMContext):
                                                                              LEXICON_RU['category_user']))
             else:                   # Если прислали без знака
                 print('Без знака')
+                operations_check = await user_old_operations_check(state=state)         # проверка последнего действия (Расходы/Доходы)
+
+                
+
 
 
         # if message.text[0] == '+' or message.text[0] == '-': # Если пользователь прислал сообщение со знаком плюс или минус

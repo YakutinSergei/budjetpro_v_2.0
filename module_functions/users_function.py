@@ -60,9 +60,10 @@ async def message_exp(check_category: str,
     month = date_value.month
     year = date_value.year
 
-    id_fin = check_category.split('`')[-1]
+    id_fin = check_category.split('`')[-1]          # Ид категориии
+    category_name = check_category.split('`')[0]    # Имя категории
 
-    text = (f'✅Добавлено {amount} ₽ в категорию расходов "{check_category}" \n'
+    text = (f'✅Добавлено {amount} ₽ в категорию расходов "{category_name}" \n'
             f'Дата: <i>{day}/{month}/{year} г.</i>')
 
     if comment != '':
@@ -91,9 +92,10 @@ async def message_inc(check_category: str,
     month = date_value.month
     year = date_value.year
 
-    id_fin = check_category.split('`')[-1]
+    id_fin = check_category.split('`')[-1]          # Ид категориии
+    category_name = check_category.split('`')[0]    # Имя категории
 
-    text = (f'✅Добавлено {amount} ₽ в источник доходов "{check_category}" \n'
+    text = (f'✅Добавлено {amount} ₽ в источник доходов "{category_name}" \n'
             f'Дата: <i>{day}/{month}/{year} г.</i>')
 
     if comment != '':
