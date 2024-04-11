@@ -40,8 +40,10 @@ async def user_check(message: Message, state: FSMContext, tg_id: int):
 
 
 async def user_old_operations_check(state: FSMContext):
-    if 'old_operations' in FSMfinance:
-        return FSMfinance['old_operations']
+    s = await state.get_data()    
+    if 'old_operations' in s:
+        print('тут')
+        return s['old_operations']
     else:  # Если нет последних добавлений, то
         await state.update_data(old_operations=False)  # Обновляем FSM
         return False
@@ -52,8 +54,10 @@ async def user_old_operations_check(state: FSMContext):
 
 async def message_exp(check_category: str,
                       amount: float,
-                      comment: str,
-                      message: Message):
+                      message: Message,
+                      state: FSMContext,
+                      comment: str=''):
+    
     date_value = datetime.now()
     # Извлекаем день, месяц и год из значения даты
     day = date_value.day
@@ -61,8 +65,9 @@ async def message_exp(check_category: str,
     year = date_value.year
 
     id_fin = check_category.split('`')[-1]
+    name_cat = check_category.split('`')[0]
 
-    text = (f'✅Добавлено {amount} ₽ в категорию расходов "{check_category}" \n'
+    text = (f'✅Добавлено {amount} ₽ в категорию расходов "{name_cat}" \n'
             f'Дата: <i>{day}/{month}/{year} г.</i>')
 
     if comment != '':
@@ -70,21 +75,24 @@ async def message_exp(check_category: str,
 
     await message.answer(text=text + comment,
                          reply_markup=await create_inline_kb(2,
-                                                             f"e_{id_fin}_",
+                                                             f"Edit_e_{id_fin}_",
                                                              LEXICON_RU['date_fin'],
                                                              LEXICON_RU['comment'],
                                                              LEXICON_RU['change'],
                                                              LEXICON_RU['cancel_fin'],
                                                              ))
-    
+    await state.update_data(old_operations=False)
+
 
 '''Функция вывода сообщение о том что добавлена новая запись в доходы'''
 
 
 async def message_inc(check_category: str,
                       amount: float,
-                      comment: str,
-                      message: Message):
+                      message: Message,
+                      state: FSMContext,
+                      comment: str =''):
+    
     date_value = datetime.now()
     # Извлекаем день, месяц и год из значения даты
     day = date_value.day
@@ -92,8 +100,9 @@ async def message_inc(check_category: str,
     year = date_value.year
 
     id_fin = check_category.split('`')[-1]
+    name_cat = check_category.split('`')[0]
 
-    text = (f'✅Добавлено {amount} ₽ в источник доходов "{check_category}" \n'
+    text = (f'✅Добавлено {amount} ₽ в источник доходов "{name_cat}" \n'
             f'Дата: <i>{day}/{month}/{year} г.</i>')
 
     if comment != '':
@@ -101,12 +110,29 @@ async def message_inc(check_category: str,
 
     await message.answer(text=text + comment,
                          reply_markup=await create_inline_kb(2,
-                                                             f"e_{id_fin}_",
+                                                             f"Edit_i_{id_fin}_",
                                                              LEXICON_RU['date_fin'],
                                                              LEXICON_RU['comment'],
                                                              LEXICON_RU['change'],
                                                              LEXICON_RU['cancel_fin'],
                                                              ))
+    
+    await state.update_data(old_operations=True)
+    
+
+
+'''Функиия выбора категорий'''
+async def print_message_choice_category(operation: str,
+                                        message: Message,
+                                        amount:float,
+                                        categorys: list):
+    
+    await message.answer(text=f'❔В какую категорию добавить {amount} ₽?',
+                        reply_markup=await create_inline_kb(1,
+                                                            f'ADD_{operation}_{amount}_',
+                                                            *categorys,
+                                                            LEXICON_RU['category_user']))
+    
 
 '''Функция проверки на число'''
 

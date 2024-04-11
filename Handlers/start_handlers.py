@@ -30,8 +30,7 @@ async def process_start_command(message: Message):
                                                                  LEXICON_RU['expenses_cat'],
                                                                  LEXICON_RU['income_cat']))
     else:
-
-        await message.answer(text="Привет",
+        await message.answer(text='Привет!',
                              reply_markup=await kb_menu_user())
 
 

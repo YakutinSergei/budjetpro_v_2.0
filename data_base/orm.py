@@ -265,3 +265,59 @@ async def check_and_add_user_category_inc(tg_id: int,
     except IntegrityError:
         # Обработка ошибки нарушения уникальности, если она возникнет
         print(IntegrityError)
+
+
+'''Функция добавления категории доходов, если указали сами'''
+
+async def add_cetegory_inc(tg_id: int,
+                           amount: float,
+                           category: str):
+    
+    try:
+        async with (async_session() as session):
+            categories_id = await session.execute(
+                                            select(IncCategoryORM.id)
+                                            .join(UsersOrm, UsersOrm.id == IncCategoryORM.user_id)
+                                            .where(UsersOrm.tg_id == tg_id,
+                                                   IncCategoryORM.name == category)
+                                             )
+            categories_id=int(categories_id.scalar())
+            category_obj = IncomesORM(income_id=categories_id,
+                                        summ=amount,
+                                        comment='')
+
+            session.add(category_obj)
+            await session.commit()
+            return f'{category}`{categories_id}'
+
+    except IntegrityError:
+        # Обработка ошибки нарушения уникальности, если она возникнет
+        print(IntegrityError)
+
+
+'''Функция добавления категории расходов, если указали сами'''
+
+async def add_cetegory_exp(tg_id: int,
+                           amount: float,
+                           category: str):
+    
+    try:
+        async with (async_session() as session):
+            categories_id = await session.execute(
+                                            select(ExpCategoryORM.id)
+                                            .join(UsersOrm, UsersOrm.id == ExpCategoryORM.user_id)
+                                            .where(UsersOrm.tg_id == tg_id,
+                                                   ExpCategoryORM.name == category)
+                                             )
+            categories_id=int(categories_id.scalar())
+            category_obj = ExpensesORM(expense_id=categories_id,
+                                        summ=amount,
+                                        comment='')
+
+            session.add(category_obj)
+            await session.commit()
+            return f'{category}`{categories_id}'
+
+    except IntegrityError:
+        # Обработка ошибки нарушения уникальности, если она возникнет
+        print(IntegrityError)
