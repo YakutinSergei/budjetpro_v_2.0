@@ -187,7 +187,7 @@ async def check_and_add_user_category_exp(tg_id: int,
                                       category: str,
                                       comment: str):
     try:
-        async with (async_session() as session):
+        async with async_session() as session:
             # Получаем список объектов категорий расходов
             categories = await session.execute(
                 select(ExpCategoryORM.name)
@@ -211,8 +211,11 @@ async def check_and_add_user_category_exp(tg_id: int,
                                                    comment=comment)
 
                         session.add(category_obj)
+                        await session.flush()
+                        new_income_id = category_obj.id
                         await session.commit()
-                        return f'{item}`{categories_id}'
+
+                        return f'{item}`{new_income_id}'
             else:
                 return categorys
 
@@ -255,8 +258,10 @@ async def check_and_add_user_category_inc(tg_id: int,
                                                   comment=comment)
 
                         session.add(category_obj)
+                        await session.flush()
+                        new_income_id = category_obj.id
                         await session.commit()
-                        return f'{item}`{categories_id}'
+                        return f'{item}`{new_income_id}'
             else:
                 return categorys
 
@@ -287,8 +292,10 @@ async def add_cetegory_inc(tg_id: int,
                                         comment='')
 
             session.add(category_obj)
+            await session.flush()
+            new_income_id = category_obj.id
             await session.commit()
-            return f'{category}`{categories_id}'
+            return f'{category}`{new_income_id}'
 
     except IntegrityError:
         # Обработка ошибки нарушения уникальности, если она возникнет
@@ -300,23 +307,64 @@ async def add_cetegory_inc(tg_id: int,
 async def add_cetegory_exp(tg_id: int,
                            amount: float,
                            category: str):
-    
     try:
-        async with (async_session() as session):
+        async with async_session() as session:
             categories_id = await session.execute(
-                                            select(ExpCategoryORM.id)
-                                            .join(UsersOrm, UsersOrm.id == ExpCategoryORM.user_id)
-                                            .where(UsersOrm.tg_id == tg_id,
-                                                   ExpCategoryORM.name == category)
-                                             )
-            categories_id=int(categories_id.scalar())
+                select(ExpCategoryORM.id)
+                .join(UsersOrm, UsersOrm.id == ExpCategoryORM.user_id)
+                .where(UsersOrm.tg_id == tg_id,
+                       ExpCategoryORM.name == category)
+            )
+            categories_id = int(categories_id.scalar())
             category_obj = ExpensesORM(expense_id=categories_id,
                                         summ=amount,
                                         comment='')
-
+            
             session.add(category_obj)
+            await session.flush()  
+            new_expense_id = category_obj.id
             await session.commit()
-            return f'{category}`{categories_id}'
+
+            return f'{category}`{new_expense_id}'
+        
+    except IntegrityError:
+        print(IntegrityError)
+
+
+'''Функция удаления расхода'''
+async def delete_exp(tg_trans: int):
+    try:
+        async with (async_session() as session):
+            # Находим запись расхода по ключу id
+            expense = await session.get(ExpensesORM, tg_trans)
+
+            if expense:
+                # Если запись найдена, удаляем её
+                await session.delete(expense)
+                await session.commit()
+                return True
+            else:
+                return False
+
+    except IntegrityError:
+        # Обработка ошибки нарушения уникальности, если она возникнет
+        print(IntegrityError)
+
+
+'''Функция удаления доходов'''
+async def delete_inc(tg_trans: int):
+    try:
+        async with (async_session() as session):
+            # Находим запись расхода по ключу id
+            expense = await session.get(IncomesORM, tg_trans)
+
+            if expense:
+                # Если запись найдена, удаляем её
+                await session.delete(expense)
+                await session.commit()
+                return True
+            else:
+                return False
 
     except IntegrityError:
         # Обработка ошибки нарушения уникальности, если она возникнет
