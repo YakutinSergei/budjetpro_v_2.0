@@ -5,6 +5,7 @@ from datetime import datetime
 
 from aiogram import Router, F
 from aiogram.fsm.context import FSMContext
+from aiogram.fsm.state import StatesGroup, State
 from aiogram.types import Message, CallbackQuery
 
 from Bot_menu.menu import create_inline_kb, kb_date_order, kb_day_order, kb_month_order, kb_year_order
@@ -16,7 +17,10 @@ from create_bot import bot
 
 router: Router = Router()
 
-
+class FSMfinance(StatesGroup):
+    comment = State()  # Состояние комментария
+    text = State()
+    id_message = State()
 
 #region Обработка сообщения от пользователя
 
@@ -223,7 +227,7 @@ async def choice_global_category(callback: CallbackQuery, state: FSMContext):
 
 #region Кнопки изменения транзакии
 '''LEXICON_RU['date_fin'] - изменить дату,
-     LEXICON_RU['comment'] - изменить коментарий,
+     LEXICON_RU['comment'] - изменить комментарий,
      LEXICON_RU['change'] - кнопка изменить,
      LEXICON_RU['cancel_fin'] - отмена записи'''
 
@@ -261,6 +265,15 @@ async def edit_transaction(callback: CallbackQuery, state: FSMContext):
                                                                              id_trans=id_trans,
                                                                              cat=category)
                                             )
+    # Нажата кнопка Изменить комментарий
+    elif action == LEXICON_RU['comment']:
+        await state.set_state(FSMfinance.comment)
+        await state.update_data(id_record=category)
+        await state.update_data(text=callback.message.text)
+        await state.update_data(id_message=callback.message.message_id)
+    # Нажата кнопка изменить
+    elif action == LEXICON_RU['change']:
+        pass
 
     await callback.answer()
 
@@ -269,7 +282,7 @@ async def edit_transaction(callback: CallbackQuery, state: FSMContext):
 
 
 @router.callback_query(F.data.startswith('cur_'))
-async def process_choice_date(callback: CallbackQuery, state: FSMContext):
+async def process_choice_date(callback: CallbackQuery):
     date_chance = callback.data.split('_')[-1]
 
     category = callback.data.split('_')[1]  # Доход или расход (e/i)
@@ -309,7 +322,7 @@ async def process_choice_date(callback: CallbackQuery, state: FSMContext):
 
 
 @router.callback_query(F.data.startswith('chDay_'))
-async def process_day_choice(callback: CallbackQuery, state: FSMContext):
+async def process_day_choice(callback: CallbackQuery):
     day_order_new = callback.data.split('_')[-1] # День который выбрал пользователь
 
     tg_id = int(callback.from_user.id) if callback.message.chat.type == 'private' else int(callback.chat.id)
@@ -339,7 +352,7 @@ async def process_day_choice(callback: CallbackQuery, state: FSMContext):
 
 
 @router.callback_query(F.data.startswith('chMon_'))
-async def process_month_choice(callback: CallbackQuery, state: FSMContext):
+async def process_month_choice(callback: CallbackQuery):
     month_order_new = callback.data.split('_')[-1] #Месяц который выбрал пользователь
     tg_id = int(callback.from_user.id) if callback.message.chat.type == 'private' else int(callback.chat.id)
 
@@ -374,7 +387,7 @@ async def process_month_choice(callback: CallbackQuery, state: FSMContext):
 
 
 @router.callback_query(F.data.startswith('chYear_'))
-async def process_year_choice(callback: CallbackQuery, state: FSMContext):
+async def process_year_choice(callback: CallbackQuery):
 
     year_order_new = callback.data.split('_')[-1] # Год который выбрал пользователь
     tg_id = int(callback.from_user.id) if callback.message.chat.type == 'private' else int(callback.chat.id)
@@ -408,7 +421,7 @@ async def process_year_choice(callback: CallbackQuery, state: FSMContext):
 
 
 @router.callback_query(F.data.startswith('backDateOrder_'))
-async def process_day_choice(callback: CallbackQuery, state: FSMContext):
+async def process_day_choice(callback: CallbackQuery):
     tg_id = int(callback.from_user.id) if callback.message.chat.type == 'private' else int(callback.chat.id)
 
     data = callback.data.split('_')[-1]  # Дата
@@ -438,7 +451,7 @@ async def process_day_choice(callback: CallbackQuery, state: FSMContext):
 
 
 @router.callback_query(F.data.startswith('ordCancel_'))
-async def process_cancel_date(callback: CallbackQuery, state: FSMContext):
+async def process_cancel_date(callback: CallbackQuery):
     category = callback.data.split('_')[1]  # Доход или расход (e/i)
     id_trans = callback.data.split('_')[2]  # id транзакции в базе данных
 
@@ -460,7 +473,7 @@ async def process_cancel_date(callback: CallbackQuery, state: FSMContext):
 
 
 @router.callback_query(F.data.startswith('done'))
-async def procces_done_date_expenses(callback: CallbackQuery, state: FSMContext):
+async def procces_done_date_expenses(callback: CallbackQuery):
     category = callback.data.split('_')[1]  # Доход или расход (e/i)
     id_trans = callback.data.split('_')[2]  # id транзакции в базе данных
 
@@ -490,6 +503,7 @@ async def procces_done_date_expenses(callback: CallbackQuery, state: FSMContext)
                                                                                 ))
     else:
         await callback.message.answer(text='Запись не найдена')
+
     await callback.answer()
 
 
