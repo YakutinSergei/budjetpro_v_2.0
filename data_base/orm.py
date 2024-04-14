@@ -1,7 +1,8 @@
+from datetime import datetime
 from difflib import SequenceMatcher
 
 from data_base.database import async_session, engine_asinc, Base
-from sqlalchemy import select, func
+from sqlalchemy import select, func, update
 from sqlalchemy.exc import IntegrityError
 
 from data_base.models import IncomesORM, UsersOrm, IncCategoryORM, ExpCategoryORM, ExpensesORM
@@ -11,7 +12,7 @@ async def create_tables():
     # Начинаем асинхронную транзакцию с базой данных
     async with engine_asinc.begin() as conn:
         existing_tables = await conn.run_sync(Base.metadata.reflect)
-
+        print(Base.metadata)
         # Проверяем, есть ли информация о существующих таблицах
         if existing_tables is not None:
             for table_name, table in Base.metadata.tables.items():
@@ -369,3 +370,33 @@ async def delete_inc(tg_trans: int):
     except IntegrityError:
         # Обработка ошибки нарушения уникальности, если она возникнет
         print(IntegrityError)
+
+
+'''Обновление записи'''
+async def update_dates_trans(date: str,
+                             id_trans: str,
+                             category: str):
+    try:
+        async with async_session() as session:
+            # Преобразуем строку в объект datetime
+            input_date = datetime.strptime(date, '%d/%m/%Y')
+
+            if category == 'e':
+                expense = await session.execute(
+                    update(ExpensesORM)
+                    .where(ExpensesORM.id == int(id_trans))
+                    .values(date=input_date)
+                )
+            elif category == 'i':
+                income = await session.execute(
+                    update(IncomesORM)
+                    .where(IncomesORM.id == int(id_trans))
+                    .values(date=input_date)
+                )
+
+            await session.commit()
+            return True
+
+    except IntegrityError as e:
+        print(f"IntegrityError occurred: {e}")
+        return False

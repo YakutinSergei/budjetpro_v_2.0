@@ -37,7 +37,9 @@ async def create_inline_kb(width: int,
 
 
 '''Клавиатура на выбор даты'''
-async def kb_date_order(order_datetime, id_exp: str, cat:str):
+
+
+async def kb_date_order(order_datetime, id_trans: str, cat: str):
     # Получаем текущую дату и время
     current_datetime = datetime.strptime(order_datetime, "%Y-%m-%d")
 
@@ -49,13 +51,13 @@ async def kb_date_order(order_datetime, id_exp: str, cat:str):
     inline_markup: InlineKeyboardBuilder = InlineKeyboardBuilder()
     buttons: list[InlineKeyboardButton] = [InlineKeyboardButton(
         text=str(current_day),
-        callback_data=f'cur_{cat}_{id_exp}_{current_day}/{current_datetime.month}/{current_year}_day'
+        callback_data=f'cur_{cat}_{id_trans}_{current_day}/{current_datetime.month}/{current_year}_day'
     ), InlineKeyboardButton(
         text=str(current_month),
-        callback_data=f'cur_{cat}_{id_exp}_{current_day}/{current_datetime.month}/{current_year}_month'
+        callback_data=f'cur_{cat}_{id_trans}_{current_day}/{current_datetime.month}/{current_year}_month'
     ), InlineKeyboardButton(
         text=str(current_year),
-        callback_data=f'cur_{cat}_{id_exp}_{current_day}/{current_datetime.month}/{current_year}_year'
+        callback_data=f'cur_{cat}_{id_trans}_{current_day}/{current_datetime.month}/{current_year}_year'
     )
     ]
     inline_markup.row(*buttons, width=3)
@@ -63,10 +65,10 @@ async def kb_date_order(order_datetime, id_exp: str, cat:str):
     # Инициализируем список для кнопок
     buttons: list[InlineKeyboardButton] = [InlineKeyboardButton(
         text=LEXICON_RU['done'],
-        callback_data=f'done_{cat}_{id_exp}_{current_day}/{current_datetime.month}/{current_year}'
+        callback_data=f'done_{cat}_{id_trans}_{current_day}/{current_datetime.month}/{current_year}'
     ), InlineKeyboardButton(
         text=LEXICON_RU['cancel'],
-        callback_data=f'ordCancel_{cat}_{id_exp}'
+        callback_data=f'ordCancel_{cat}_{id_trans}'
     )
     ]
     inline_markup.row(*buttons, width=1)
@@ -74,6 +76,7 @@ async def kb_date_order(order_datetime, id_exp: str, cat:str):
 
 
 '''Клавиатура на изменение '''
+
 
 async def kb_edit_message(id_exp: str, cat: int):
     if cat == 1:
@@ -99,11 +102,10 @@ async def kb_edit_message(id_exp: str, cat: int):
     return inline_markup.as_markup()
 
 
-
 '''Клавиатура на выбор дня заказа'''
 
 
-async def kb_day_order(index_day: int, count_day_month: int, id_exp: str, cat: str, date: str):
+async def kb_day_order(index_day: int, count_day_month: int, id_trans: str, cat: str, date: str):
     end_month = 7 - ((index_day + count_day_month + 1) % 7)
     # Инициализируем билдер
     kb_builder: InlineKeyboardBuilder = InlineKeyboardBuilder()
@@ -117,13 +119,13 @@ async def kb_day_order(index_day: int, count_day_month: int, id_exp: str, cat: s
         else:
             buttons.append(InlineKeyboardButton(
                 text=f'{i - index_day}',
-                callback_data=f'chDay_{cat}_{date}_{id_exp}_{i - index_day}'))
+                callback_data=f'chDay_{cat}_{id_trans}_{date}_{i - index_day}'))
 
     kb_builder.row(*buttons, width=7)
 
     buttons: list[InlineKeyboardButton] = [InlineKeyboardButton(
         text=LEXICON_RU['back_date_order'],
-        callback_data=f'backDateOrder_{cat}_{date}_{id_exp}_{id_exp}')
+        callback_data=f'backDateOrder_{cat}_{id_trans}_{date}')
     ]
     kb_builder.row(*buttons, width=1)
 
@@ -134,7 +136,7 @@ async def kb_day_order(index_day: int, count_day_month: int, id_exp: str, cat: s
 '''Клавиатура для выбора месяца заказа'''
 
 
-async def kb_month_order(id_exp, cat: str, date: str):
+async def kb_month_order(id_trans: str, cat: str, date: str):
     kb_builder: InlineKeyboardBuilder = InlineKeyboardBuilder()
     # Инициализируем список для кнопок
     buttons: list[InlineKeyboardButton] = []
@@ -156,13 +158,13 @@ async def kb_month_order(id_exp, cat: str, date: str):
     for i in range(1, len(months) + 1):
         buttons.append(InlineKeyboardButton(
             text=f'{months[i]}',
-            callback_data=f'chMon_{cat}_{date}_{id_exp}_{i}'))
+            callback_data=f'chMon_{cat}_{id_trans}_{date}_{i}'))
 
     kb_builder.row(*buttons, width=3)
 
     buttons: list[InlineKeyboardButton] = [InlineKeyboardButton(
         text=LEXICON_RU['back_date_order'],
-        callback_data=f'backDateOrder_{cat}_{date}_{id_exp}_{id_exp}')
+        callback_data=f'backDateOrder_{cat}_{id_trans}_{date}')
     ]
     kb_builder.row(*buttons, width=1)
 
@@ -173,7 +175,7 @@ async def kb_month_order(id_exp, cat: str, date: str):
 '''Клавиатура на выбор года заказа'''
 
 
-async def kb_year_order(id_exp, cat: str, date: str):
+async def kb_year_order(id_trans, cat: str, date: str):
     year_order = datetime.now().year
     kb_builder: InlineKeyboardBuilder = InlineKeyboardBuilder()
     # Инициализируем список для кнопок
@@ -182,13 +184,13 @@ async def kb_year_order(id_exp, cat: str, date: str):
     for i in range(year_order-2, year_order+1):
         buttons.append(InlineKeyboardButton(
             text=f'{i}',
-            callback_data=f'chYear_{cat}_{date}_{id_exp}_{id_exp}_{i}'))
+            callback_data=f'chYear_{cat}_{id_trans}_{date}_{i}'))
 
     kb_builder.row(*buttons, width=3)
 
     buttons: list[InlineKeyboardButton] = [InlineKeyboardButton(
         text=LEXICON_RU['back_date_order'],
-        callback_data=f'backDateOrder_{cat}_{date}_{id_exp}_{id_exp}')
+        callback_data=f'backDateOrder_{cat}_{id_trans}_{date}')
     ]
     kb_builder.row(*buttons, width=1)
 
