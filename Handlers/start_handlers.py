@@ -62,7 +62,8 @@ async def process_add_order_location(message: Message, state: FSMContext):
     #Ввод расходов
     if category == LEXICON_RU['expenses_cat']:
         for text_category in message.text.split('\n'):
-            category_expenses.append(text_category.replace('_', '').replace("'", ''))
+            category_expenses.append(text_category.replace('_', '').replace("'", '')
+                                     .replace('"', ''))
 
         await add_exp_category_bd(tg_id=tg_id, category=category_expenses) # Добавляем категории расходов в базу данных
         await message.answer(text=f"✅Категории расходов успешно добавлены\n\n"

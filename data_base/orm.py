@@ -25,7 +25,6 @@ async def create_tables():
             await conn.run_sync(Base.metadata.create_all)
 
 
-
 async def add_users_bd(tg_id: int):
     try:
         async with async_session() as session:
@@ -47,9 +46,10 @@ async def add_users_bd(tg_id: int):
         return None  # Возвращаем None в случае ошибки
 
 
-
 '''Функция добавления категорий расходов'''
-async def add_exp_category_bd(tg_id:int, category):
+
+
+async def add_exp_category_bd(tg_id: int, category):
     try:
         async with async_session() as session:
 
@@ -91,8 +91,11 @@ async def add_exp_category_bd(tg_id:int, category):
         # Обработка ошибки нарушения уникальности, если она возникнет
         print(IntegrityError)
 
+
 '''Функция добавления категорий доходов'''
-async def add_inc_category_bd(tg_id:int, category: list):
+
+
+async def add_inc_category_bd(tg_id: int, category: list):
     try:
         async with async_session() as session:
             user = await session.execute(select(UsersOrm.id).where(UsersOrm.tg_id == tg_id))
@@ -144,6 +147,7 @@ async def check_user_exists(tg_id: int) -> bool:
 
 '''Функция вывода всех категорий расходов'''
 
+
 async def get_exp_categories(tg_id: int) -> list:
     try:
         async with (async_session() as session):
@@ -161,7 +165,9 @@ async def get_exp_categories(tg_id: int) -> list:
         # Обработка ошибки нарушения уникальности, если она возникнет
         print(IntegrityError)
 
+
 '''Функция вывода всех категорий доходов'''
+
 
 async def get_inc_categories(tg_id: int) -> list:
     try:
@@ -183,10 +189,11 @@ async def get_inc_categories(tg_id: int) -> list:
 
 '''Проверка есть ли такая категория расходов и если есть то добавляем'''
 
+
 async def check_and_add_user_category_exp(tg_id: int,
-                                      amount: float,
-                                      category: str,
-                                      comment: str):
+                                          amount: float,
+                                          category: str,
+                                          comment: str):
     try:
         async with async_session() as session:
             # Получаем список объектов категорий расходов
@@ -201,12 +208,12 @@ async def check_and_add_user_category_exp(tg_id: int,
                 for item in categorys:
                     if (SequenceMatcher(None, category.lower(), item.lower()).ratio() * 100) > 80:
                         categories_id = await session.execute(
-                                            select(ExpCategoryORM.id)
-                                            .join(UsersOrm, UsersOrm.id == ExpCategoryORM.user_id)
-                                            .where(UsersOrm.tg_id == tg_id,
-                                                   ExpCategoryORM.name == item)
-                                             )
-                        categories_id=int(categories_id.scalar())
+                            select(ExpCategoryORM.id)
+                            .join(UsersOrm, UsersOrm.id == ExpCategoryORM.user_id)
+                            .where(UsersOrm.tg_id == tg_id,
+                                   ExpCategoryORM.name == item)
+                        )
+                        categories_id = int(categories_id.scalar())
                         category_obj = ExpensesORM(expense_id=categories_id,
                                                    summ=amount,
                                                    comment=comment)
@@ -231,9 +238,9 @@ async def check_and_add_user_category_exp(tg_id: int,
 
 
 async def check_and_add_user_category_inc(tg_id: int,
-                                      amount: float,
-                                      category: str,
-                                      comment: str):
+                                          amount: float,
+                                          category: str,
+                                          comment: str):
     try:
         async with (async_session() as session):
             # Получаем список объектов категорий расходов
@@ -248,12 +255,12 @@ async def check_and_add_user_category_inc(tg_id: int,
                 for item in categorys:
                     if (SequenceMatcher(None, category.lower(), item.lower()).ratio() * 100) > 80:
                         categories_id = await session.execute(
-                                            select(IncCategoryORM.id)
-                                            .join(UsersOrm, UsersOrm.id == IncCategoryORM.user_id)
-                                            .where(UsersOrm.tg_id == tg_id,
-                                                   IncCategoryORM.name == item)
-                                             )
-                        categories_id=int(categories_id.scalar())
+                            select(IncCategoryORM.id)
+                            .join(UsersOrm, UsersOrm.id == IncCategoryORM.user_id)
+                            .where(UsersOrm.tg_id == tg_id,
+                                   IncCategoryORM.name == item)
+                        )
+                        categories_id = int(categories_id.scalar())
                         category_obj = IncomesORM(income_id=categories_id,
                                                   summ=amount,
                                                   comment=comment)
@@ -275,22 +282,22 @@ async def check_and_add_user_category_inc(tg_id: int,
 
 '''Функция добавления категории доходов, если указали сами'''
 
+
 async def add_cetegory_inc(tg_id: int,
                            amount: float,
                            category: str):
-    
     try:
         async with (async_session() as session):
             categories_id = await session.execute(
-                                            select(IncCategoryORM.id)
-                                            .join(UsersOrm, UsersOrm.id == IncCategoryORM.user_id)
-                                            .where(UsersOrm.tg_id == tg_id,
-                                                   IncCategoryORM.name == category)
-                                             )
-            categories_id=int(categories_id.scalar())
+                select(IncCategoryORM.id)
+                .join(UsersOrm, UsersOrm.id == IncCategoryORM.user_id)
+                .where(UsersOrm.tg_id == tg_id,
+                       IncCategoryORM.name == category)
+            )
+            categories_id = int(categories_id.scalar())
             category_obj = IncomesORM(income_id=categories_id,
-                                        summ=amount,
-                                        comment='')
+                                      summ=amount,
+                                      comment='')
 
             session.add(category_obj)
             await session.flush()
@@ -305,6 +312,7 @@ async def add_cetegory_inc(tg_id: int,
 
 '''Функция добавления категории расходов, если указали сами'''
 
+
 async def add_cetegory_exp(tg_id: int,
                            amount: float,
                            category: str):
@@ -318,21 +326,23 @@ async def add_cetegory_exp(tg_id: int,
             )
             categories_id = int(categories_id.scalar())
             category_obj = ExpensesORM(expense_id=categories_id,
-                                        summ=amount,
-                                        comment='')
-            
+                                       summ=amount,
+                                       comment='')
+
             session.add(category_obj)
-            await session.flush()  
+            await session.flush()
             new_expense_id = category_obj.id
             await session.commit()
 
             return f'{category}`{new_expense_id}'
-        
+
     except IntegrityError:
         print(IntegrityError)
 
 
 '''Функция удаления расхода'''
+
+
 async def delete_exp(tg_trans: int):
     try:
         async with (async_session() as session):
@@ -353,6 +363,8 @@ async def delete_exp(tg_trans: int):
 
 
 '''Функция удаления доходов'''
+
+
 async def delete_inc(tg_trans: int):
     try:
         async with (async_session() as session):
@@ -373,6 +385,8 @@ async def delete_inc(tg_trans: int):
 
 
 '''Обновление записи'''
+
+
 async def update_dates_trans(date: str,
                              id_trans: str,
                              category: str):
@@ -400,3 +414,139 @@ async def update_dates_trans(date: str,
     except IntegrityError as e:
         print(f"IntegrityError occurred: {e}")
         return False
+
+
+'''Добавление комментария'''
+
+
+async def edit_comment(id_record: int, comment: str, operation=str):
+    try:
+        async with async_session() as session:
+            if operation == 'e':
+                expense = await session.execute(
+                    update(ExpensesORM)
+                    .where(ExpensesORM.id == id_record)
+                    .values(comment=comment)
+                )
+            elif operation == 'i':
+                income = await session.execute(
+                    update(IncomesORM)
+                    .where(IncomesORM.id == id_record)
+                    .values(comment=comment)
+                )
+
+            await session.commit()
+            return True
+
+    except IntegrityError as e:
+        print(f"IntegrityError occurred: {e}")
+        return False
+
+
+'''Обновление категории'''
+
+
+async def update_category_trans(operation: str,
+                                id_trans: int,
+                                new_category: str,
+                                tg_id: int):
+    try:
+        async with async_session() as session:
+            if operation == 'e':
+                categories_id = await session.execute(
+                    select(ExpCategoryORM.id)
+                    .join(UsersOrm, UsersOrm.id == ExpCategoryORM.user_id)
+                    .where(UsersOrm.tg_id == tg_id,
+                           ExpCategoryORM.name == new_category)
+                )
+                categories_id = int(categories_id.scalar())
+                expense = await session.execute(
+                    update(ExpensesORM)
+                    .where(ExpensesORM.id == id_trans)
+                    .values(expense_id=categories_id)
+                )
+            elif operation == 'i':
+                categories_id = await session.execute(
+                    select(IncCategoryORM.id)
+                    .join(UsersOrm, UsersOrm.id == IncCategoryORM.user_id)
+                    .where(UsersOrm.tg_id == tg_id,
+                           IncCategoryORM.name == new_category)
+                )
+                categories_id = int(categories_id.scalar())
+                income = await session.execute(
+                    update(IncomesORM)
+                    .where(IncomesORM.id == id_trans)
+                    .values(income_id=categories_id)
+                )
+
+            await session.commit()
+            return True
+
+    except IntegrityError as e:
+        print(f"IntegrityError occurred: {e}")
+        return False
+
+
+'''Функция вывода отчета за месяц'''
+
+
+async def get_finances_by_month(tg_id: int,
+                                month: int,
+                                year: int):
+    async with async_session() as session:
+        # Найти пользователя по tg_id
+        user = await session.execute(
+            select(UsersOrm.id).where(UsersOrm.tg_id == tg_id)
+        )
+
+        user_id = user.scalar()
+        if not user_id:
+            return "Пользователь не найден"
+
+        # Получить все категории расходов и доходов пользователя
+        expense_categories = await session.execute(
+            select(ExpCategoryORM.id, ExpCategoryORM.name, ExpCategoryORM.limit_summ)
+            .join(UsersOrm, UsersOrm.id == ExpCategoryORM.user_id)
+            .where(UsersOrm.tg_id == tg_id)
+        )
+        expense_categories = [category for category in expense_categories.all()]
+
+        income_categories = await session.execute(
+            select(IncCategoryORM.id, IncCategoryORM.name, IncCategoryORM.limit_summ)
+            .join(UsersOrm, UsersOrm.id == IncCategoryORM.user_id)
+            .where(UsersOrm.tg_id == tg_id)
+        )
+
+        income_categories = [category for category in income_categories.all()]
+
+        # Собрать результат для категорий расходов
+        expense_result = {}
+
+        for category in expense_categories:
+            transactions = await session.execute(
+                select(func.sum(ExpensesORM.summ), func.sum(ExpCategoryORM.limit_summ))
+                .join(ExpCategoryORM)
+                .filter(
+                    ExpensesORM.expense_id == category[0],
+                    func.extract('month', ExpensesORM.date) == month,
+                    func.extract('year', ExpensesORM.date) == year
+                )
+            )
+            transactions = transactions.first()
+            expense_result[category[1]] = (transactions[0] or 0, category[2])
+        # Собрать результат для категорий доходов
+        income_result = {}
+        for category in income_categories:
+            transactions = await session.execute(
+                select(func.sum(IncomesORM.summ), func.sum(IncCategoryORM.limit_summ))
+                .join(IncCategoryORM)
+                .filter(
+                    IncomesORM.income_id == category[0],
+                    func.extract('month', IncomesORM.date) == month,
+                    func.extract('year', IncomesORM.date) == year
+                )
+            )
+            transactions = transactions.first()
+            income_result[category[1]] = (transactions[0] or 0, category[2])
+
+        return income_result, expense_result
