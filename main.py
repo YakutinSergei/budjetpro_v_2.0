@@ -4,7 +4,7 @@ import logging
 from aiogram import Bot
 from aiogram.types import BotCommand
 
-from Handlers import start_handlers, financial_transactions_handlers, monthly_report_handlers
+from Handlers import start_handlers, financial_transactions_handlers, monthly_report_handlers, personal_account_handlers
 from create_bot import bot, dp
 from environs import Env
 
@@ -41,6 +41,7 @@ async def main():
 
     # Регистриуем роутеры в диспетчере
     dp.include_router(start_handlers.router)
+    dp.include_router(personal_account_handlers.router)
     dp.include_router(monthly_report_handlers.router)
     dp.include_router(financial_transactions_handlers.router)
 
