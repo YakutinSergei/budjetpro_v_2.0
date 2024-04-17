@@ -169,7 +169,7 @@ def get_text_message(report_month, month, year):
         percent_income_text = ''
         if limit > 0:
             percent = '{0:.2f}'.format(summary / limit * 100)
-            percent_income_text = f'({percent}) %'
+            percent_income_text = f'({percent}%)'
 
         text += f'{key}: {report_income[key][0]} Руб. {percent_income_text}\n'
 
@@ -177,7 +177,7 @@ def get_text_message(report_month, month, year):
     percent_income_text = ''
     if all_limit_income > 0:
         percent_income = '{0:.2f}'.format(all_summary_income / all_limit_income * 100)
-        percent_income_text = f'({percent_income}) %'
+        percent_income_text = f'({percent_income}%)'
     text += (f'-------------------\n'
              f'Итого: {all_summary_income} {percent_income_text}\n'
              f'\n{LEXICON_RU["expenses_cat"]} в {month_name} {year} года\n')
@@ -192,14 +192,14 @@ def get_text_message(report_month, month, year):
         percent_expenses_text = ''
         if limit > 0:
             percent = '{0:.2f}'.format(summary / limit * 100)
-            percent_expenses_text = f'({percent}) %'
+            percent_expenses_text = f'({percent}%)'
 
         text += f'{key}: {report_expense[key][0]} Руб. {percent_expenses_text}\n'
 
     percent_expenses_text = ''
     if all_limit_income > 0:
         percent_income = '{0:.2f}'.format(all_summary_income / all_limit_income * 100)
-        percent_expenses_text = f'({percent_income}) %'
+        percent_expenses_text = f'({percent_income}%)'
     text += (f'-------------------\n'
              f'Итого: {all_summary_expense} {percent_expenses_text}\n\n')
 

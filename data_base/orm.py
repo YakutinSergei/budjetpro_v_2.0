@@ -1,6 +1,8 @@
 from datetime import datetime
 from difflib import SequenceMatcher
 
+import redis
+
 from data_base.database import async_session, engine_asinc, Base
 from sqlalchemy import select, func, update, extract
 from sqlalchemy.exc import IntegrityError
@@ -159,7 +161,12 @@ async def get_exp_categories(tg_id: int) -> list:
                 .where(UsersOrm.tg_id == tg_id)
             )
 
-            return [category.name for category in categories.all()]
+            categories_exp = [category.name for category in categories.all()]
+            # Сохраняем значения в Redis
+            r = redis.Redis(host='localhost', port=6379, db=0)
+            r.set('categories_exp', ','.join(categories_exp))
+
+            return categories_exp
 
     except IntegrityError:
         # Обработка ошибки нарушения уникальности, если она возникнет
@@ -180,7 +187,12 @@ async def get_inc_categories(tg_id: int) -> list:
                 .where(UsersOrm.tg_id == tg_id)
             )
 
-            return [category.name for category in categories.all()]
+            categories_inc = [category.name for category in categories.all()]
+            # Сохраняем значения в Redis
+            r = redis.Redis(host='localhost', port=6379, db=0)
+            r.set('categories_inc', ','.join(categories_inc))
+
+            return categories_inc
 
     except IntegrityError:
         # Обработка ошибки нарушения уникальности, если она возникнет

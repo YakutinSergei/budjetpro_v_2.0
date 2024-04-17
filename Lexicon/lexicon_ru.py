@@ -36,6 +36,7 @@ LEXICON_RU: dict[str, str] = {
                       '-1500 на продукты - сходил в магазин\n'
                       'Надеюсь, это поможет вам удобно вести учёт ваших финансов!',
     'balance_user': '💰Баланс',
+
     'report_month_user': '🗓️Отчет за месяц',
     'analysis_user': '📊Анализ',
     'personal_account_user': '👤Личный кабинет',
@@ -61,4 +62,14 @@ LEXICON_RU: dict[str, str] = {
     'back_report': '⏪',
     'forward_report': '⏩',
     'subscription': '🗓️Подписка',
+    'add': '➕Добавить',
+
+    'edit_name': 'Изменить название',
+    'edit_position': 'Изменить позицию',
+    'del_category': 'Удалить',
+    'edit_summ': 'Изменить плановую сумму',
+
+
+    'set_category': '📈Категории📉',
+    'set_help': '🧑🏼‍💻Поддержка',
 }

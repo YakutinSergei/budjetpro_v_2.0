@@ -11,10 +11,8 @@ router: Router = Router()
 @router.message(F.text == LEXICON_RU['personal_account_user'])
 async def add_finance_user(message: Message):
     tg_id = int(message.from_user.id) if message.chat.type == 'private' else int(message.chat.id)
-    print(tg_id)
 
     data_personal = await get_data_personal_bd(tg_id=tg_id)
-    print(data_personal)
 
     balance = '{:,}'.format(data_personal["balance"]).replace(',', ' ')  # Баланс
     total_incomes = '{:,}'.format(data_personal["total_incomes"]).replace(',', ' ')  # Сумма доходов
