@@ -1,14 +1,17 @@
+import json
 from datetime import datetime
 
+import redis
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import StatesGroup, State
-from aiogram.types import Message
+from aiogram.types import Message, CallbackQuery
 
 from Bot_menu.menu import create_inline_kb
 from FSMstate.FSMstate import FSMfinance
 from Handlers.start_handlers import process_start_command
 from Lexicon.lexicon_ru import LEXICON_RU
-from data_base.orm import check_user_exists
+from create_bot import bot
+from data_base.orm import check_user_exists, get_inc_categories, get_exp_categories
 
 '''Функция проверки есть ли такой пользователь в базе'''
 
@@ -45,7 +48,6 @@ async def user_check(message: Message, state: FSMContext, tg_id: int):
 async def user_old_operations_check(state: FSMContext):
     s = await state.get_data()
     if 'old_operations' in s:
-        print('тут')
         return s['old_operations']
     else:  # Если нет последних добавлений, то
         await state.update_data(old_operations=False)  # Обновляем FSM
@@ -148,6 +150,7 @@ def is_number(s):
 
 '''Текст на отчет за месяц'''
 
+
 def get_text_message(report_month, month, year):
     all_summary_income = 0  # Общая сумма доходов
     all_limit_income = 0  # Общий лимит дохожов
@@ -205,6 +208,7 @@ def get_text_message(report_month, month, year):
 
     return text
 
+
 def get_month_nam_full(month_number):
     months = {
         1: 'январе',
@@ -221,3 +225,70 @@ def get_month_nam_full(month_number):
         12: 'декабре'
     }
     return months.get(month_number, 'Некорректный номер месяца')
+
+
+async def get_redis_data(keys: str):
+    r = redis.Redis(host='localhost', port=6379, db=0)
+    categories_str = r.get(f'{keys}')
+    if categories_str:
+        category_list = json.loads(categories_str)
+        return category_list
+    else:
+        return False
+
+
+'''Функция вывода на экран сообщения с категориями в настройках'''
+
+
+async def print_message_list_category(category: str, tg_id: int, callback: CallbackQuery):
+    if category == 'e':
+        category = LEXICON_RU['expenses_cat']
+    elif category == 'i':
+        category = LEXICON_RU['income_cat']
+
+    if category == LEXICON_RU['income_cat']:
+        category_user = await get_redis_data('categories_inc')  # Получаем категории доходов из Redis
+
+        if category_user:
+            categorys = [category[1] for category in category_user]
+        else:  # Если в редис нет
+            categorys = await get_inc_categories(tg_id)  # Получаем категории доходов
+
+        await bot.edit_message_text(chat_id=tg_id,
+                                    message_id=callback.message.message_id,
+                                    text=f'Выберите категорию',
+                                    reply_markup=await create_inline_kb(1,
+                                                                        f'SAC_i_',
+                                                                        *categorys,
+                                                                        LEXICON_RU['add'],
+                                                                        LEXICON_RU['back_date_order']))
+    elif category == LEXICON_RU['expenses_cat']:  # Категории расходов
+        category_user = await get_redis_data('categories_exp')  # Получаем категории расходов из Redis
+
+        if category_user:
+            categorys = [category[1] for category in category_user]
+        else:  # Если в редис нет
+            categorys = await get_exp_categories(tg_id)  # Получаем категории расходов
+
+        await bot.edit_message_text(chat_id=tg_id,
+                                    message_id=callback.message.message_id,
+                                    text=f'Выберите категорию',
+                                    reply_markup=await create_inline_kb(1,
+                                                                        f'SAC_e_',
+                                                                        *categorys,
+                                                                        LEXICON_RU['add'],
+                                                                        LEXICON_RU['back_date_order']))
+
+
+'''Функция печати сообщения с выбором категорий для редактирования'''
+async def print_message_setting_categoryes(tg_id: int,
+                                           callback: CallbackQuery):
+
+    await bot.edit_message_text(text='📈Настройки категорий📉',
+                                chat_id=tg_id,
+                                message_id=callback.message.message_id,
+                                reply_markup=await create_inline_kb(1,
+                                                                    'setCategory_',
+                                                                    LEXICON_RU['income_cat'],
+                                                                    LEXICON_RU['expenses_cat'],
+                                                                    LEXICON_RU['back_date_order']))

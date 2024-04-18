@@ -1,3 +1,4 @@
+import json
 from datetime import datetime
 from difflib import SequenceMatcher
 
@@ -79,7 +80,7 @@ async def add_exp_category_bd(tg_id: int, category):
                         limit = 0
 
                 category_obj = ExpCategoryORM(user_id=user_id,
-                                              name=name[0],
+                                              name=name[0][:17],
                                               limit_summ=limit,
                                               position=next_position + index)
                 categories_to_add.append(category_obj)
@@ -87,6 +88,7 @@ async def add_exp_category_bd(tg_id: int, category):
             session.add_all(categories_to_add)
             await session.commit()
 
+        get_category = await get_exp_categories(tg_id=tg_id)
 
 
     except IntegrityError:
@@ -123,13 +125,15 @@ async def add_inc_category_bd(tg_id: int, category: list):
                     except:
                         limit = 0
                 category_obj = IncCategoryORM(user_id=user_id,
-                                              name=name[0],
+                                              name=name[0][:17],
                                               limit_summ=limit,
                                               position=next_position + index)
                 categories_to_add.append(category_obj)
 
             session.add_all(categories_to_add)
             await session.commit()
+
+        get_category = await get_inc_categories(tg_id=tg_id)
 
     except IntegrityError:
         # Обработка ошибки нарушения уникальности, если она возникнет
@@ -156,17 +160,27 @@ async def get_exp_categories(tg_id: int) -> list:
 
             # Получаем список объектов категорий расходов
             categories = await session.execute(
-                select(ExpCategoryORM.name)
+                select(ExpCategoryORM.id, ExpCategoryORM.name, ExpCategoryORM.position)
                 .join(UsersOrm, UsersOrm.id == ExpCategoryORM.user_id)
                 .where(UsersOrm.tg_id == tg_id)
+                .order_by(ExpCategoryORM.position)
             )
 
-            categories_exp = [category.name for category in categories.all()]
+            # Преобразуем объекты категорий в словари
+            categories_data = [(categorys.id, categorys.name, categorys.position) for categorys in categories.all()]
+            categories_data_name = [category[1] for category in categories_data]
+
+            # Сериализуем список кортежей в JSON строку
+            category_json = json.dumps(categories_data)
+
             # Сохраняем значения в Redis
             r = redis.Redis(host='localhost', port=6379, db=0)
-            r.set('categories_exp', ','.join(categories_exp))
+            r.set('categories_exp', category_json)
+            # for category_data in categories_data:
+            #     # Каждую категорию сохраняем под своим уникальным ключом
+            #     r.set(f'exp_category', json.dumps(category_data))
 
-            return categories_exp
+            return categories_data_name
 
     except IntegrityError:
         # Обработка ошибки нарушения уникальности, если она возникнет
@@ -182,17 +196,27 @@ async def get_inc_categories(tg_id: int) -> list:
 
             # Получаем список объектов категорий расходов
             categories = await session.execute(
-                select(IncCategoryORM.name)
+                select(IncCategoryORM.id, IncCategoryORM.name, IncCategoryORM.position)
                 .join(UsersOrm, UsersOrm.id == IncCategoryORM.user_id)
                 .where(UsersOrm.tg_id == tg_id)
+                .order_by(IncCategoryORM.position)
             )
 
-            categories_inc = [category.name for category in categories.all()]
+            # Преобразуем объекты категорий в словари
+            categories_data = [(categorys.id, categorys.name, categorys.position) for categorys in categories.all()]
+            categories_data_name = [category[1] for category in categories_data]
+
+            # Сериализуем список кортежей в JSON строку
+            category_json = json.dumps(categories_data)
+
             # Сохраняем значения в Redis
             r = redis.Redis(host='localhost', port=6379, db=0)
-            r.set('categories_inc', ','.join(categories_inc))
+            r.set('categories_inc', category_json)
+            # for category_data in categories_data:
+            #     # Каждую категорию сохраняем под своим уникальным ключом
+            #     r.set(f'exp_category', json.dumps(category_data))
 
-            return categories_inc
+            return categories_data_name
 
     except IntegrityError:
         # Обработка ошибки нарушения уникальности, если она возникнет
@@ -580,7 +604,6 @@ async def get_data_personal_bd(tg_id: int):
             # Получаем пользователя по tg_id
             user = await session.execute(select(UsersOrm).filter(UsersOrm.tg_id == tg_id))
             user = user.scalar_one_or_none()
-            print(user.id)
 
             if not user:
                 return "Пользователь не найден"
@@ -660,6 +683,39 @@ async def get_data_personal_bd(tg_id: int):
                 user_summary['subscription'] = False
 
             return user_summary
+
+    except IntegrityError as e:
+        print(f"IntegrityError occurred: {e}")
+        return False
+
+
+'''Изменение названия категории'''
+
+
+async def edit_name_category(id_cat: int,
+                             tg_id: int,
+                             operator: str,
+                             new_name: str):
+    try:
+        async with async_session() as session:
+            if operator == 'e':
+                expense = await session.execute(
+                    update(ExpCategoryORM)
+                    .where(ExpCategoryORM.id == int(id_cat))
+                    .values(name=new_name)
+                )
+                await session.commit()
+                await get_exp_categories(tg_id)
+            elif operator == 'i':
+                income = await session.execute(
+                    update(IncCategoryORM)
+                    .where(IncCategoryORM.id == int(id_cat))
+                    .values(name=new_name)
+                )
+                await session.commit()
+                await get_inc_categories(tg_id)
+            return True
+
 
     except IntegrityError as e:
         print(f"IntegrityError occurred: {e}")

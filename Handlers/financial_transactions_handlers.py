@@ -15,7 +15,7 @@ from data_base.orm import add_cetegory_exp, add_cetegory_inc, check_and_add_user
     check_and_add_user_category_inc, delete_exp, delete_inc, get_exp_categories, get_inc_categories, update_dates_trans, \
     edit_comment, update_category_trans
 from module_functions.users_function import message_inc, print_message_choice_category, user_check, message_exp, \
-    user_old_operations_check
+    user_old_operations_check, get_redis_data
 from create_bot import bot
 
 router: Router = Router()
@@ -120,10 +120,23 @@ async def add_finance_user(message: Message, state: FSMContext):
                                 state=state)  # проверка последнего действия (Расходы/Доходы)
 
                             if operations_check:
-                                category_user = await get_inc_categories(tg_id)  # Получаем категории доходов
+                                category_user = await get_redis_data(
+                                    'categories_inc')  # Получаем категории доходов из Redis
+
+                                if category_user:
+                                    category_user = [category[1] for category in category_user]
+                                else:  # Если в редис нет
+                                    category_user = await get_inc_categories(tg_id)  # Получаем категории доходов
+
                                 operation = 'i'
                             else:
-                                category_user = await get_exp_categories(tg_id)  # Получаем категории расходов
+                                category_user = await get_redis_data(
+                                    'categories_exp')  # Получаем категории расходов из Redis
+
+                                if category_user:
+                                    category_user = [category[1] for category in category_user]
+                                else:  # Если в редис нет
+                                    category_user = await get_exp_categories(tg_id)  # Получаем категории расходов
                                 operation = 'e'
 
                             # Печатаем сообщение с выбором категорий
@@ -139,10 +152,23 @@ async def add_finance_user(message: Message, state: FSMContext):
                         state=state)  # проверка последнего действия (Расходы/Доходы)
 
                     if operations_check:
-                        category_user = await get_inc_categories(tg_id)  # Получаем категории доходов
+                        category_user = await get_redis_data('categories_inc')  # Получаем категории доходов из Redis
+
+                        if category_user:
+                            category_user = [category[1] for category in category_user]
+                        else:  # Если в редис нет
+
+                            category_user = await get_inc_categories(tg_id)  # Получаем категории доходов
+
                         operation = 'i'
                     else:
-                        category_user = await get_exp_categories(tg_id)  # Получаем категории расходов
+                        category_user = await get_redis_data('categories_exp')  # Получаем категории расходов из Redis
+
+                        if category_user:
+                            category_user = [category[1] for category in category_user]
+                        else:  # Если в редис нет
+                            category_user = await get_exp_categories(tg_id)  # Получаем категории расходов
+
                         operation = 'e'
 
                     # Печатаем сообщение с выбором категорий
@@ -211,7 +237,13 @@ async def choice_global_category(callback: CallbackQuery):
     amount = callback.data.split('_')[1]
 
     if category == LEXICON_RU['expenses_cat']:  # Категории расходов
-        categorys = await get_exp_categories(tg_id=tg_id)
+        category_user = await get_redis_data('categories_exp')  # Получаем категории расходов из Redis
+
+        if category_user:
+            categorys = [category[1] for category in category_user]
+        else:  # Если в редис нет
+            categorys = await get_exp_categories(tg_id)  # Получаем категории расходов
+
         await bot.edit_message_text(chat_id=tg_id,
                                     message_id=callback.message.message_id,
                                     text=f'❔В какую категорию добавить {amount} ₽?',
@@ -221,7 +253,13 @@ async def choice_global_category(callback: CallbackQuery):
                                                                         LEXICON_RU['category_user']))
 
     elif category == LEXICON_RU['income_cat']:  # Категории доходов
-        categorys = await get_inc_categories(tg_id=tg_id)
+        category_user = await get_redis_data('categories_inc')  # Получаем категории доходов из Redis
+
+        if category_user:
+            categorys = [category[1] for category in category_user]
+        else:  # Если в редис нет
+            categorys = await get_inc_categories(tg_id)  # Получаем категории доходов
+
         await bot.edit_message_text(chat_id=tg_id,
                                     message_id=callback.message.message_id,
                                     text=f'❔В какую категорию добавить {amount} ₽?',
@@ -287,7 +325,12 @@ async def edit_transaction(callback: CallbackQuery, state: FSMContext):
     # Нажата кнопка изменить
     elif action == LEXICON_RU['change']:
         if category == 'e':  # Категории расходов
-            categorys = await get_exp_categories(tg_id=tg_id)
+            category_user = await get_redis_data('categories_exp')  # Получаем категории расходов из Redis
+
+            if category_user:
+                categorys = [category[1] for category in category_user]
+            else:  # Если в редис нет
+                categorys = await get_exp_categories(tg_id)  # Получаем категории расходов
             await bot.edit_message_reply_markup(chat_id=tg_id,
                                                 message_id=callback.message.message_id,
                                                 reply_markup=await create_inline_kb(1,
@@ -296,7 +339,13 @@ async def edit_transaction(callback: CallbackQuery, state: FSMContext):
                                                                                     LEXICON_RU['cancel']))
 
         elif category == 'i':  # Категории доходов
-            categorys = await get_inc_categories(tg_id=tg_id)
+            category_user = await get_redis_data('categories_inc')  # Получаем категории доходов из Redis
+
+            if category_user:
+                categorys = [category[1] for category in category_user]
+            else:  # Если в редис нет
+                categorys = await get_inc_categories(tg_id)  # Получаем категории доходов
+
             await bot.edit_message_reply_markup(chat_id=tg_id,
                                                 message_id=callback.message.message_id,
                                                 reply_markup=await create_inline_kb(1,

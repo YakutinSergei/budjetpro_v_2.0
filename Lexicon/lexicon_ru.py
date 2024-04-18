@@ -64,12 +64,13 @@ LEXICON_RU: dict[str, str] = {
     'subscription': '🗓️Подписка',
     'add': '➕Добавить',
 
-    'edit_name': 'Изменить название',
-    'edit_position': 'Изменить позицию',
-    'del_category': 'Удалить',
-    'edit_summ': 'Изменить плановую сумму',
+    'edit_name': '📝Изменить название',
+    'edit_position': '📝Изменить позицию',
+    'del_category': '❌Удалить',
+    'edit_summ': '📝Изменить плановую сумму',
 
 
     'set_category': '📈Категории📉',
     'set_help': '🧑🏼‍💻Поддержка',
+    'edit_name_error': 'Категория не найдена',
 }
