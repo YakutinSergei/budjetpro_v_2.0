@@ -36,7 +36,7 @@ async def add_finance_user(message: Message):
 
 @router.callback_query(F.data.startswith('report_'))
 async def process_month_choice(callback: CallbackQuery):
-    tg_id = int(callback.from_user.id) if callback.message.chat.type == 'private' else int(callback.chat.id)
+    tg_id = int(callback.from_user.id) if callback.message.chat.type == 'private' else int(callback.message.chat.id)
 
     month = int(callback.data.split('_')[1])
     year = int(callback.data.split('_')[2])
