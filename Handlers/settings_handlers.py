@@ -6,7 +6,7 @@ from aiogram.filters import StateFilter
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery
 
-from Bot_menu.menu import create_inline_kb
+from Bot_menu.menu import create_inline_kb, kb_edit_positions
 from FSMstate.FSMstate import FSMsettings
 from Lexicon.lexicon_ru import LEXICON_RU
 from create_bot import bot
@@ -232,7 +232,29 @@ async def set_edit_category_user(callback: CallbackQuery, state: FSMContext):
         await callback.message.answer(text='Введите новое название категории'
                                            '<i>Название не должно превышать 15 символов</i>')
     elif operations == LEXICON_RU['edit_position']:  # Изменение позиции
-        pass
+        if operator == 'e':
+            category_user = await get_redis_data('categories_exp')  # Получаем категории расходов из Redis
+        elif operator == 'i':
+            category_user = await get_redis_data('categories_inc')  # Получаем категории расходов из Redis
+
+            # Узнаем id категории
+        name = ''
+        position = ''
+
+        for item in category_user:
+            if item[0] == int(category_id):
+                name = item[1]
+                position = item[2]
+                break
+        await bot.edit_message_text(chat_id=tg_id,
+                                    message_id=callback.message.message_id,
+                                    text=f'Категория: {name}\n'
+                                         f'Текущая позиция: {position}\n\n'
+                                         f'🔽Выберите новую позицию🔽',
+                                    reply_markup=await kb_edit_positions(opetition=operator,
+                                                                         id_trans=category_id,
+                                                                         cor_position=position,
+                                                                         all_position=len(category_user)))
     elif operations == LEXICON_RU['edit_summ']:  # Изменение суммы
         pass
     elif operations == LEXICON_RU['del_category']:  # Удаление категории
@@ -254,7 +276,7 @@ async def process_enter_name_comment(message: Message, state: FSMContext):
     id_cat = info_cat['id_category']  # Id записи
     message_id = info_cat['id_message']  # ID сообщения
     operator = info_cat['operators']  # e/i
-    old_operations = info_cat['old_operations']  # Последнее действие
+    old_operations = await user_old_operations_check(state)  # Последнее действие
     edit_cat = await edit_name_category(id_cat=id_cat,
                                         operator=operator,
                                         tg_id=tg_id,
@@ -280,3 +302,46 @@ async def process_enter_name_comment(message: Message, state: FSMContext):
 
 
 '''Установить новую позицию'''
+
+
+@router.callback_query(F.data.startswith('EPos_'))
+async def set_edit_position_user(callback: CallbackQuery, state: FSMContext):
+    tg_id = int(callback.from_user.id) if callback.message.chat.type == 'private' else int(callback.message.chat.id)
+
+    action = callback.data.split('_')[-1]  # Какое действие совершаем
+    operator = callback.data.split('_')[2] # e/i
+    position = int(callback.data.split('_')[1]) # номер позиции
+
+    if operator == 'e':
+        category_user = await get_redis_data('categories_exp')  # Получаем категории расходов из Redis
+    elif operator == 'i':
+        category_user = await get_redis_data('categories_inc')  # Получаем категории расходов из Redis
+
+    category_id = 0
+
+    for item in category_user:
+        if item[2] == int(position):
+            category_id = item[0]
+            break
+
+    if action == 'back':
+        if position > 1:
+            position -= 1
+
+            await bot.edit_message_reply_markup(chat_id=tg_id,
+                                                message_id=callback.message.message_id,
+                                                reply_markup=await kb_edit_positions(opetition=operator,
+                                                                                     id_trans=category_id,
+                                                                                     cor_position=position,
+                                                                                     all_position=len(category_user)))
+    elif action == 'forward':
+        if position < len(category_user):
+            position += 1
+            await bot.edit_message_reply_markup(chat_id=tg_id,
+                                                message_id=callback.message.message_id,
+                                                reply_markup=await kb_edit_positions(opetition=operator,
+                                                                                     id_trans=category_id,
+                                                                                     cor_position=position,
+                                                                                     all_position=len(category_user)))
+
+    await callback.answer()

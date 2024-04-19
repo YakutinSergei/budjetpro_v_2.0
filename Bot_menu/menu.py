@@ -75,33 +75,6 @@ async def kb_date_order(order_datetime, id_trans: str, cat: str):
     return inline_markup.as_markup()
 
 
-'''Клавиатура на изменение '''
-
-
-async def kb_edit_message(id_exp: str, cat: int):
-    if cat == 1:
-        pref = 'exp'
-    else:
-        pref = 'inc'
-
-    # Инициализируем билдер
-    inline_markup: InlineKeyboardBuilder = InlineKeyboardBuilder()
-    buttons: list[InlineKeyboardButton] = [InlineKeyboardButton(
-        text=LEXICON_RU['edit_sum'],
-        callback_data=f'editSum_{pref}_{id_exp}'
-    ), InlineKeyboardButton(
-        text=LEXICON_RU['edit_category'],
-        callback_data=f'editCat_{pref}_{id_exp}'
-    ), InlineKeyboardButton(
-        text=LEXICON_RU['cancel'],
-        callback_data=f'ordCancel_{pref}_{id_exp}'
-    )
-    ]
-    inline_markup.row(*buttons, width=1)
-
-    return inline_markup.as_markup()
-
-
 '''Клавиатура на выбор дня заказа'''
 
 
@@ -181,7 +154,7 @@ async def kb_year_order(id_trans, cat: str, date: str):
     # Инициализируем список для кнопок
     buttons: list[InlineKeyboardButton] = []
 
-    for i in range(year_order-2, year_order+1):
+    for i in range(year_order - 2, year_order + 1):
         buttons.append(InlineKeyboardButton(
             text=f'{i}',
             callback_data=f'chYear_{cat}_{id_trans}_{date}_{i}'))
@@ -213,6 +186,41 @@ async def kb_menu_user():
     menu_user.row(*btn_row_1, width=2)
 
     return menu_user.as_markup(resize_keyboard=True)
+
+
+'''Клавиатура на позиции'''
+
+
+async def kb_edit_positions(opetition:str,
+                            id_trans: str,
+                            cor_position: int,
+                            all_position: int
+                            ):
+    inline_markup: InlineKeyboardBuilder = InlineKeyboardBuilder()
+    buttons: list[InlineKeyboardButton] = [InlineKeyboardButton(
+        text='➖',
+        callback_data=f'EPos_{cor_position}_{opetition}_back'
+    ), InlineKeyboardButton(
+        text=f'{cor_position}/{all_position}',
+        callback_data=f'EPos_'
+    ), InlineKeyboardButton(
+        text='➕',
+        callback_data=f'EPos_{cor_position}_{opetition}_forward'
+    )
+    ]
+    inline_markup.row(*buttons, width=3)
+
+    # Инициализируем список для кнопок
+    buttons: list[InlineKeyboardButton] = [InlineKeyboardButton(
+        text=LEXICON_RU['done'],
+        callback_data=f'EPos_{opetition}_{id_trans}_{cor_position}_done'
+    ), InlineKeyboardButton(
+        text=LEXICON_RU['cancel'],
+        callback_data=f'Epos_cancel'
+    )
+    ]
+    inline_markup.row(*buttons, width=1)
+    return inline_markup.as_markup()
 
 
 def get_month_name(month_number):
