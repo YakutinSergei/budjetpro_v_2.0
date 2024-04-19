@@ -174,8 +174,11 @@ async def get_exp_categories(tg_id: int) -> list:
             category_json = json.dumps(categories_data)
 
             # Сохраняем значения в Redis
+            key = f'categories_exp:{tg_id}'
             r = redis.Redis(host='localhost', port=6379, db=0)
-            r.set('categories_exp', category_json)
+            r.set(key, category_json)
+            # r = redis.Redis(host='localhost', port=6379, db=0)
+            # r.set('categories_exp', category_json)
             # for category_data in categories_data:
             #     # Каждую категорию сохраняем под своим уникальным ключом
             #     r.set(f'exp_category', json.dumps(category_data))
@@ -210,8 +213,9 @@ async def get_inc_categories(tg_id: int) -> list:
             category_json = json.dumps(categories_data)
 
             # Сохраняем значения в Redis
+            key = f'categories_inc:{tg_id}'
             r = redis.Redis(host='localhost', port=6379, db=0)
-            r.set('categories_inc', category_json)
+            r.set(key, category_json)
             # for category_data in categories_data:
             #     # Каждую категорию сохраняем под своим уникальным ключом
             #     r.set(f'exp_category', json.dumps(category_data))

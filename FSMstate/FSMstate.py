@@ -14,3 +14,4 @@ class FSMsettings(StatesGroup):
     operators = State()
     id_category = State()
     id_message = State()
+    help = State()

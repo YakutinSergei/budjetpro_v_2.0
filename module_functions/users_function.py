@@ -247,7 +247,7 @@ async def print_message_list_category(category: str, tg_id: int, callback: Callb
         category = LEXICON_RU['income_cat']
 
     if category == LEXICON_RU['income_cat']:
-        category_user = await get_redis_data('categories_inc')  # Получаем категории доходов из Redis
+        category_user = await get_redis_data(f'categories_inc:{tg_id}')  # Получаем категории доходов из Redis
 
         if category_user:
             categorys = [category[1] for category in category_user]
@@ -263,7 +263,7 @@ async def print_message_list_category(category: str, tg_id: int, callback: Callb
                                                                         LEXICON_RU['add'],
                                                                         LEXICON_RU['back_date_order']))
     elif category == LEXICON_RU['expenses_cat']:  # Категории расходов
-        category_user = await get_redis_data('categories_exp')  # Получаем категории расходов из Redis
+        category_user = await get_redis_data(f'categories_exp:{tg_id}')  # Получаем категории доходов из Redis
         if category_user:
             categorys = [category[1] for category in category_user]
         else:  # Если в редис нет

@@ -28,7 +28,7 @@ async def add_finance_user(message: Message):
 
 
 @router.callback_query(F.data.startswith('set_'))
-async def set_category_user(callback: CallbackQuery):
+async def set_category_user(callback: CallbackQuery, state: FSMContext):
     tg_id = int(callback.from_user.id) if callback.message.chat.type == 'private' else int(callback.message.chat.id)
 
     set_item = callback.data.split('_')[-1]  # Что выбрал пользователь
@@ -36,6 +36,11 @@ async def set_category_user(callback: CallbackQuery):
     if set_item == LEXICON_RU['set_category']:
         await print_message_setting_categoryes(tg_id=tg_id,
                                                callback=callback)
+    elif set_item == LEXICON_RU['set_help']:
+        await state.set_state(FSMsettings.help)
+
+        await callback.message.answer(text='📋Задайте интересующий вас вопрос‼️\n'
+                                           '🧑🏻‍💻Поддержка свяжется с вами в ближайшее время⌛️')
 
     await callback.answer()
 
@@ -78,7 +83,8 @@ async def set_category_all_user(callback: CallbackQuery, state: FSMContext):
                                                callback=callback)
     elif category == LEXICON_RU['add']:
         if operation == 'e':
-            category_user = await get_redis_data('categories_exp')  # Получаем категории расходов из Redis
+            category_user = await get_redis_data(f'categories_exp:{tg_id}')  # Получаем категории расходов из Redis
+            print(category_user)
             # Узнаем id категории
             category_id = 0
 
@@ -93,7 +99,7 @@ async def set_category_all_user(callback: CallbackQuery, state: FSMContext):
             await state.update_data(id_category=category_id)
             await state.update_data(id_message=callback.message.message_id)
         elif operation == 'i':
-            category_user = await get_redis_data('categories_inc')  # Получаем категории расходов из Redis
+            category_user = await get_redis_data(f'categories_inc:{tg_id}')  # Получаем категории расходов из Redis
             # Узнаем id категории
             category_id = 0
 
@@ -108,15 +114,19 @@ async def set_category_all_user(callback: CallbackQuery, state: FSMContext):
             await state.update_data(id_message=callback.message.message_id)
     else:
         if operation == 'e':
-            category_user = await get_redis_data('categories_exp')  # Получаем категории расходов из Redis
+            category_user = await get_redis_data(f'categories_exp:{tg_id}')  # Получаем категории расходов из Redis
         elif operation == 'i':
-            category_user = await get_redis_data('categories_inc')
+            category_user = await get_redis_data(f'categories_inc:{tg_id}')  # Получаем категории расходов из Redis
 
         if category_user:
             categorys = [category[1] for category in category_user]
         else:  # Если в редис нет
-            categorys = await get_exp_categories(tg_id)  # Получаем категории расходов
-            category_user = await get_redis_data('categories_exp')  # Получаем категории расходов из Redis
+            if operation == 'e':
+                categorys = await get_exp_categories(tg_id)  # Получаем категории расходов
+                category_user = await get_redis_data(f'categories_exp:{tg_id}')  # Получаем категории расходов из Redis
+            elif operation == 'i':
+                categorys = await get_inc_categories(tg_id)  # Получаем категории расходов
+                category_user = await get_redis_data(f'categories_inc:{tg_id}')  # Получаем категории расходов из Redis
 
         # Узнаем id категории
         category_id = 0
@@ -170,7 +180,7 @@ async def process_enter_name_comment(message: Message, state: FSMContext):
             category = LEXICON_RU['income_cat']
 
         if category == LEXICON_RU['income_cat']:
-            category_user = await get_redis_data('categories_inc')  # Получаем категории доходов из Redis
+            category_user = await get_redis_data(f'categories_inc:{tg_id}')  # Получаем категории расходов из Redis
 
             if category_user:
                 categorys = [category[1] for category in category_user]
@@ -188,7 +198,7 @@ async def process_enter_name_comment(message: Message, state: FSMContext):
             await message.answer(text='✅Категории успешно добавлены')
 
         elif category == LEXICON_RU['expenses_cat']:  # Категории расходов
-            category_user = await get_redis_data('categories_exp')  # Получаем категории расходов из Redis
+            category_user = await get_redis_data(f'categories_exp:{tg_id}')  # Получаем категории расходов из Redis
 
             if category_user:
                 categorys = [category[1] for category in category_user]
@@ -234,9 +244,9 @@ async def set_edit_category_user(callback: CallbackQuery, state: FSMContext):
                                            '<i>Название не должно превышать 15 символов</i>')
     elif operations == LEXICON_RU['edit_position']:  # Изменение позиции
         if operator == 'e':
-            category_user = await get_redis_data('categories_exp')  # Получаем категории расходов из Redis
+            category_user = await get_redis_data(f'categories_exp:{tg_id}')  # Получаем категории расходов из Redis
         elif operator == 'i':
-            category_user = await get_redis_data('categories_inc')  # Получаем категории расходов из Redis
+            category_user = await get_redis_data(f'categories_inc:{tg_id}')  # Получаем категории расходов из Redis
 
             # Узнаем id категории
         name = ''
@@ -329,9 +339,9 @@ async def set_edit_position_user(callback: CallbackQuery, state: FSMContext):
     id_trans = callback.data.split('_')[-2]
 
     if operator == 'e':
-        category_user = await get_redis_data('categories_exp')  # Получаем категории расходов из Redis
+        category_user = await get_redis_data(f'categories_exp:{tg_id}')  # Получаем категории расходов из Redis
     elif operator == 'i':
-        category_user = await get_redis_data('categories_inc')  # Получаем категории расходов из Redis
+        category_user = await get_redis_data(f'categories_inc:{tg_id}')  # Получаем категории расходов из Redis
 
     '''ЗДЕСЬ СДЕЛАТЬ ЛОГИРОВАНИЕ'''
 
@@ -420,9 +430,9 @@ async def process_enter_name_comment(message: Message, state: FSMContext):
             if new_limit:
 
                 if operator == 'e':
-                    category_user = await get_redis_data('categories_exp')  # Получаем категории расходов из Redis
+                    category_user = await get_redis_data(f'categories_exp:{tg_id}')  # Получаем категории расходов из Redis
                 elif operator == 'i':
-                    category_user = await get_redis_data('categories_inc')  # Получаем категории расходов из Redis
+                    category_user = await get_redis_data(f'categories_inc:{tg_id}')  # Получаем категории расходов из Redis
 
                 for item in category_user:
                     if item[0] == int(id_cat):
@@ -449,3 +459,19 @@ def is_float(text):
         return True
     except ValueError:
         return False
+
+'''ПОДДЕРЖКА'''
+
+@router.message(StateFilter(FSMsettings.help))
+async def process_enter_name_comment(message: Message, state: FSMContext):
+    try:
+        await message.send_copy(chat_id=6451994483)
+    except TypeError:
+        await message.reply(
+            text='Данный тип апдейтов не поддерживается '
+                 'методом send_copy'
+        )
+    await state.clear()
+    await state.update_data(user_check=True)
+    old_operations = await user_old_operations_check(state)  # Последнее действие
+    await state.update_data(old_operations=old_operations)

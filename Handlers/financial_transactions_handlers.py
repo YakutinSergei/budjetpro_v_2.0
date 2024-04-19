@@ -121,7 +121,7 @@ async def add_finance_user(message: Message, state: FSMContext):
 
                             if operations_check:
                                 category_user = await get_redis_data(
-                                    'categories_inc')  # Получаем категории доходов из Redis
+                                    f'categories_inc:{tg_id}')  # Получаем категории доходов из Redis
 
                                 if category_user:
                                     category_user = [category[1] for category in category_user]
@@ -131,7 +131,7 @@ async def add_finance_user(message: Message, state: FSMContext):
                                 operation = 'i'
                             else:
                                 category_user = await get_redis_data(
-                                    'categories_exp')  # Получаем категории расходов из Redis
+                                    f'categories_exp:{tg_id}')  # Получаем категории расходов из Redis
 
                                 if category_user:
                                     category_user = [category[1] for category in category_user]
@@ -152,7 +152,8 @@ async def add_finance_user(message: Message, state: FSMContext):
                         state=state)  # проверка последнего действия (Расходы/Доходы)
 
                     if operations_check:
-                        category_user = await get_redis_data('categories_inc')  # Получаем категории доходов из Redis
+                        category_user = await get_redis_data(
+                            f'categories_inc:{tg_id}')  # Получаем категории доходов из Redis
 
                         if category_user:
                             category_user = [category[1] for category in category_user]
@@ -162,7 +163,8 @@ async def add_finance_user(message: Message, state: FSMContext):
 
                         operation = 'i'
                     else:
-                        category_user = await get_redis_data('categories_exp')  # Получаем категории расходов из Redis
+                        category_user = await get_redis_data(
+                            f'categories_exp:{tg_id}')  # Получаем категории расходов из Redis
 
                         if category_user:
                             category_user = [category[1] for category in category_user]
@@ -237,7 +239,7 @@ async def choice_global_category(callback: CallbackQuery):
     amount = callback.data.split('_')[1]
 
     if category == LEXICON_RU['expenses_cat']:  # Категории расходов
-        category_user = await get_redis_data('categories_exp')  # Получаем категории расходов из Redis
+        category_user = await get_redis_data(f'categories_exp:{tg_id}')  # Получаем категории расходов из Redis
 
         if category_user:
             categorys = [category[1] for category in category_user]
@@ -253,7 +255,7 @@ async def choice_global_category(callback: CallbackQuery):
                                                                         LEXICON_RU['category_user']))
 
     elif category == LEXICON_RU['income_cat']:  # Категории доходов
-        category_user = await get_redis_data('categories_inc')  # Получаем категории доходов из Redis
+        category_user = await get_redis_data(f'categories_inc:{tg_id}')  # Получаем категории доходов из Redis
 
         if category_user:
             categorys = [category[1] for category in category_user]
@@ -325,7 +327,7 @@ async def edit_transaction(callback: CallbackQuery, state: FSMContext):
     # Нажата кнопка изменить
     elif action == LEXICON_RU['change']:
         if category == 'e':  # Категории расходов
-            category_user = await get_redis_data('categories_exp')  # Получаем категории расходов из Redis
+            category_user = await get_redis_data(f'categories_exp:{tg_id}')  # Получаем категории расходов из Redis
 
             if category_user:
                 categorys = [category[1] for category in category_user]
@@ -339,7 +341,7 @@ async def edit_transaction(callback: CallbackQuery, state: FSMContext):
                                                                                     LEXICON_RU['cancel']))
 
         elif category == 'i':  # Категории доходов
-            category_user = await get_redis_data('categories_inc')  # Получаем категории доходов из Redis
+            category_user = await get_redis_data(f'categories_inc:{tg_id}')  # Получаем категории доходов из Redis
 
             if category_user:
                 categorys = [category[1] for category in category_user]
