@@ -10,7 +10,7 @@ class FSMfinance(StatesGroup):
 class FSMsettings(StatesGroup):
     add_category = State()
     name = State()
-    summ = State()
+    limit = State()
     operators = State()
     id_category = State()
     id_message = State()

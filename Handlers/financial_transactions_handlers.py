@@ -691,3 +691,4 @@ async def process_choice_new_category(callback: CallbackQuery, state: FSMContext
 async def test_callback(callback: CallbackQuery):
     print(callback.data)
     await callback.answer()
+

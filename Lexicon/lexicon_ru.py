@@ -67,7 +67,7 @@ LEXICON_RU: dict[str, str] = {
     'edit_name': '📝Изменить название',
     'edit_position': '📝Изменить позицию',
     'del_category': '❌Удалить',
-    'edit_summ': '📝Изменить плановую сумму',
+    'edit_summ': '📝Изменить лимит',
 
 
     'set_category': '📈Категории📉',

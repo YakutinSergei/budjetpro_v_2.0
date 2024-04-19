@@ -5,7 +5,7 @@ from difflib import SequenceMatcher
 import redis
 
 from data_base.database import async_session, engine_asinc, Base
-from sqlalchemy import select, func, update, extract
+from sqlalchemy import select, func, update, extract, and_, delete
 from sqlalchemy.exc import IntegrityError
 
 from data_base.models import IncomesORM, UsersOrm, IncCategoryORM, ExpCategoryORM, ExpensesORM
@@ -711,6 +711,187 @@ async def edit_name_category(id_cat: int,
                     update(IncCategoryORM)
                     .where(IncCategoryORM.id == int(id_cat))
                     .values(name=new_name)
+                )
+                await session.commit()
+                await get_inc_categories(tg_id)
+            return True
+
+
+    except IntegrityError as e:
+        print(f"IntegrityError occurred: {e}")
+        return False
+
+
+'''Изменение позиции'''
+
+
+async def update_position(id_trans: str,
+                          operator: str,
+                          new_position: int,
+                          old_position: int,
+                          tg_id: int):
+    try:
+        async with async_session() as session:
+            if old_position == new_position:
+                return True
+            elif operator == 'e':
+                id_user = await session.execute(select(UsersOrm.id)
+                                                .where(UsersOrm.tg_id == tg_id))
+                id_user = id_user.one()[0]
+                if new_position > old_position:
+
+                    expense = await session.execute(
+                        update(ExpCategoryORM)
+                        .where(
+                            (ExpCategoryORM.user_id == id_user) &
+                            (ExpCategoryORM.position.between(old_position + 1, new_position))
+                        ).values(position=ExpCategoryORM.position - 1)
+                    )
+                else:
+                    id_user = await session.execute(select(UsersOrm.id)
+                                                    .where(UsersOrm.tg_id == tg_id))
+                    id_user = id_user.one()[0]
+
+                    if operator == 'e':
+                        expense = await session.execute(
+                            update(ExpCategoryORM)
+                            .where(
+                                (ExpCategoryORM.user_id == id_user) &
+                                (ExpCategoryORM.position.between(new_position, old_position - 1))
+                            ).values(position=ExpCategoryORM.position + 1)
+                        )
+                expense = await session.execute(
+                    update(ExpCategoryORM)
+                    .where(ExpCategoryORM.id == int(id_trans))
+                    .values(position=new_position)
+                )
+
+                await session.commit()
+                await get_exp_categories(tg_id)
+
+            elif operator == 'i':
+                id_user = await session.execute(select(UsersOrm.id)
+                                                .where(UsersOrm.tg_id == tg_id))
+                id_user = id_user.one()[0]
+                if new_position > old_position:
+                    income = await session.execute(
+                        update(IncCategoryORM)
+                        .where(
+                            (IncCategoryORM.user_id == id_user) &
+                            (IncCategoryORM.position.between(old_position + 1, new_position))
+                        ).values(position=IncCategoryORM.position - 1)
+                    )
+
+                else:
+                    income = await session.execute(
+                        update(IncCategoryORM)
+                        .where(
+                            (IncCategoryORM.user_id == id_user) &
+                            (IncCategoryORM.position.between(new_position, old_position - 1))
+                        ).values(position=IncCategoryORM.position + 1)
+                    )
+
+                income = await session.execute(
+                    update(IncCategoryORM)
+                    .where(IncCategoryORM.id == int(id_trans))
+                    .values(position=new_position)
+                )
+
+                await session.commit()
+                await get_inc_categories(tg_id)
+
+        return True
+
+    except IntegrityError as e:
+        print(f"IntegrityError occurred: {e}")
+        return False
+
+
+'''Установление нового лимита'''
+
+
+async def update_limit(id_cat: int,
+                       tg_id: int,
+                       operator: str,
+                       new_limit: str):
+    try:
+        async with async_session() as session:
+            if operator == 'e':
+                expense = await session.execute(
+                    update(ExpCategoryORM)
+                    .where(ExpCategoryORM.id == int(id_cat))
+                    .values(limit_summ=new_limit)
+                )
+                await session.commit()
+                await get_exp_categories(tg_id)
+            elif operator == 'i':
+                income = await session.execute(
+                    update(IncCategoryORM)
+                    .where(IncCategoryORM.id == int(id_cat))
+                    .values(limit_summ=new_limit)
+                )
+                await session.commit()
+                await get_inc_categories(tg_id)
+            return True
+
+
+    except IntegrityError as e:
+        print(f"IntegrityError occurred: {e}")
+        return False
+
+
+'''Удаление категории'''
+
+
+async def del_category_bd(category_id: str,
+                          operator: str,
+                          tg_id):
+    try:
+        async with async_session() as session:
+            if operator == 'e':
+                id_user = await session.execute(select(UsersOrm.id)
+                                                .where(UsersOrm.tg_id == tg_id))
+                id_user = id_user.one()[0]
+
+                position_category = await session.execute(select(ExpCategoryORM.position)
+                                                          .where(ExpCategoryORM.id == int(category_id)))
+
+                position_category = position_category.one()[0]
+
+                expense_del = await session.execute(
+                    delete(ExpCategoryORM)
+                    .where(ExpCategoryORM.id == int(category_id))
+                )
+
+                expense = await session.execute(
+                    update(ExpCategoryORM)
+                    .where(
+                        (ExpCategoryORM.user_id == id_user) &
+                        (ExpCategoryORM.position > position_category)
+                    ).values(position=ExpCategoryORM.position - 1)
+                )
+
+                await session.commit()
+                await get_exp_categories(tg_id)
+            elif operator == 'i':
+                id_user = await session.execute(select(UsersOrm.id)
+                                                .where(UsersOrm.tg_id == tg_id))
+                id_user = id_user.one()[0]
+
+                position_category = await session.execute(select(IncCategoryORM.position)
+                                                          .where(IncCategoryORM.id == int(category_id)))
+                position_category = position_category.one()[0]
+
+                expense = await session.execute(
+                    update(IncCategoryORM)
+                    .where(
+                        (IncCategoryORM.user_id == id_user) &
+                        (IncCategoryORM.position > position_category)
+                    ).values(position=IncCategoryORM.position - 1)
+                )
+                expense_del = await session.execute(
+                    delete(IncCategoryORM)
+                    .where(IncCategoryORM.id == int(category_id))
                 )
                 await session.commit()
                 await get_inc_categories(tg_id)

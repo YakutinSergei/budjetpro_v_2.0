@@ -199,13 +199,13 @@ async def kb_edit_positions(opetition:str,
     inline_markup: InlineKeyboardBuilder = InlineKeyboardBuilder()
     buttons: list[InlineKeyboardButton] = [InlineKeyboardButton(
         text='➖',
-        callback_data=f'EPos_{cor_position}_{opetition}_back'
+        callback_data=f'EPos_{cor_position}_{opetition}_{id_trans}_back'
     ), InlineKeyboardButton(
         text=f'{cor_position}/{all_position}',
         callback_data=f'EPos_'
     ), InlineKeyboardButton(
         text='➕',
-        callback_data=f'EPos_{cor_position}_{opetition}_forward'
+        callback_data=f'EPos_{cor_position}_{opetition}_{id_trans}_forward'
     )
     ]
     inline_markup.row(*buttons, width=3)
@@ -213,10 +213,10 @@ async def kb_edit_positions(opetition:str,
     # Инициализируем список для кнопок
     buttons: list[InlineKeyboardButton] = [InlineKeyboardButton(
         text=LEXICON_RU['done'],
-        callback_data=f'EPos_{opetition}_{id_trans}_{cor_position}_done'
+        callback_data=f'EPos_{cor_position}_{opetition}_{id_trans}_done'
     ), InlineKeyboardButton(
         text=LEXICON_RU['cancel'],
-        callback_data=f'Epos_cancel'
+        callback_data=f'EPos_{cor_position}_{opetition}_{id_trans}_cancel'
     )
     ]
     inline_markup.row(*buttons, width=1)

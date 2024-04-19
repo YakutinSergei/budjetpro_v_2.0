@@ -1,6 +1,3 @@
-import json
-
-import redis
 from aiogram import Router, F
 from aiogram.filters import StateFilter
 from aiogram.fsm.context import FSMContext
@@ -10,8 +7,8 @@ from Bot_menu.menu import create_inline_kb, kb_edit_positions
 from FSMstate.FSMstate import FSMsettings
 from Lexicon.lexicon_ru import LEXICON_RU
 from create_bot import bot
-from data_base.orm import get_data_personal_bd, get_exp_categories, get_inc_categories, edit_name_category, \
-    add_inc_category_bd, add_exp_category_bd
+from data_base.orm import get_exp_categories, get_inc_categories, edit_name_category, \
+    add_inc_category_bd, add_exp_category_bd, update_position, update_limit, del_category_bd
 from module_functions.users_function import get_redis_data, print_message_list_category, \
     print_message_setting_categoryes, user_old_operations_check
 
@@ -188,6 +185,8 @@ async def process_enter_name_comment(message: Message, state: FSMContext):
                                                                             *categorys,
                                                                             LEXICON_RU['add'],
                                                                             LEXICON_RU['back_date_order']))
+            await message.answer(text='✅Категории успешно добавлены')
+
         elif category == LEXICON_RU['expenses_cat']:  # Категории расходов
             category_user = await get_redis_data('categories_exp')  # Получаем категории расходов из Redis
 
@@ -204,6 +203,8 @@ async def process_enter_name_comment(message: Message, state: FSMContext):
                                                                             *categorys,
                                                                             LEXICON_RU['add'],
                                                                             LEXICON_RU['back_date_order']))
+            await message.answer(text='✅Категории успешно добавлены')
+
 
     else:
         await message.answer(text='УПС! Что то пошло не так')
@@ -256,9 +257,23 @@ async def set_edit_category_user(callback: CallbackQuery, state: FSMContext):
                                                                          cor_position=position,
                                                                          all_position=len(category_user)))
     elif operations == LEXICON_RU['edit_summ']:  # Изменение суммы
-        pass
+        await state.set_state(FSMsettings.limit)
+        await state.update_data(operators=operator)
+        await state.update_data(id_category=category_id)
+        await state.update_data(id_message=callback.message.message_id)
+        await callback.message.answer(text='Введите новый лимит')
+
     elif operations == LEXICON_RU['del_category']:  # Удаление категории
-        pass
+        del_category = await del_category_bd(category_id=category_id,
+                                             operator=operator,
+                                             tg_id=tg_id)
+
+        if del_category:
+            await print_message_list_category(category=operator,
+                                              tg_id=tg_id,
+                                              callback=callback)
+        else:
+            await callback.message.answer(text='УПС! Что то пошло не так')
     elif operations == LEXICON_RU['back_date_order']:  # Назад
         await print_message_list_category(category=operator,
                                           tg_id=tg_id,
@@ -309,20 +324,16 @@ async def set_edit_position_user(callback: CallbackQuery, state: FSMContext):
     tg_id = int(callback.from_user.id) if callback.message.chat.type == 'private' else int(callback.message.chat.id)
 
     action = callback.data.split('_')[-1]  # Какое действие совершаем
-    operator = callback.data.split('_')[2] # e/i
-    position = int(callback.data.split('_')[1]) # номер позиции
+    operator = callback.data.split('_')[2]  # e/i
+    position = int(callback.data.split('_')[1])  # номер позиции
+    id_trans = callback.data.split('_')[-2]
 
     if operator == 'e':
         category_user = await get_redis_data('categories_exp')  # Получаем категории расходов из Redis
     elif operator == 'i':
         category_user = await get_redis_data('categories_inc')  # Получаем категории расходов из Redis
 
-    category_id = 0
-
-    for item in category_user:
-        if item[2] == int(position):
-            category_id = item[0]
-            break
+    '''ЗДЕСЬ СДЕЛАТЬ ЛОГИРОВАНИЕ'''
 
     if action == 'back':
         if position > 1:
@@ -331,7 +342,7 @@ async def set_edit_position_user(callback: CallbackQuery, state: FSMContext):
             await bot.edit_message_reply_markup(chat_id=tg_id,
                                                 message_id=callback.message.message_id,
                                                 reply_markup=await kb_edit_positions(opetition=operator,
-                                                                                     id_trans=category_id,
+                                                                                     id_trans=id_trans,
                                                                                      cor_position=position,
                                                                                      all_position=len(category_user)))
     elif action == 'forward':
@@ -340,8 +351,101 @@ async def set_edit_position_user(callback: CallbackQuery, state: FSMContext):
             await bot.edit_message_reply_markup(chat_id=tg_id,
                                                 message_id=callback.message.message_id,
                                                 reply_markup=await kb_edit_positions(opetition=operator,
-                                                                                     id_trans=category_id,
+                                                                                     id_trans=id_trans,
                                                                                      cor_position=position,
                                                                                      all_position=len(category_user)))
+    if action == 'cancel':
+        for item in category_user:
+            if item[0] == int(id_trans):
+                category = item[1]
+                break
+        await bot.edit_message_text(chat_id=tg_id,
+                                    message_id=callback.message.message_id,
+                                    text=f'Редактирование категории <b>"{category}"</b>',
+                                    reply_markup=await create_inline_kb(1,
+                                                                        f'eCat_{operator}_{id_trans}_',
+                                                                        LEXICON_RU['edit_name'],
+                                                                        LEXICON_RU['edit_position'],
+                                                                        LEXICON_RU['edit_summ'],
+                                                                        LEXICON_RU['del_category'],
+                                                                        LEXICON_RU['back_date_order']))
+
+    if action == 'done':
+        for item in category_user:
+            if item[0] == int(id_trans):
+                old_position = item[2]
+                category = item[1]
+                break
+
+        await update_position(id_trans=id_trans,
+                              operator=operator,
+                              new_position=position,
+                              old_position=old_position,
+                              tg_id=tg_id)
+
+        await bot.edit_message_text(chat_id=tg_id,
+                                    message_id=callback.message.message_id,
+                                    text=f'Редактирование категории <b>"{category}"</b>',
+                                    reply_markup=await create_inline_kb(1,
+                                                                        f'eCat_{operator}_{id_trans}_',
+                                                                        LEXICON_RU['edit_name'],
+                                                                        LEXICON_RU['edit_position'],
+                                                                        LEXICON_RU['edit_summ'],
+                                                                        LEXICON_RU['del_category'],
+                                                                        LEXICON_RU['back_date_order']))
 
     await callback.answer()
+
+
+'''Установление нового лимита'''
+
+
+@router.message(StateFilter(FSMsettings.limit))
+async def process_enter_name_comment(message: Message, state: FSMContext):
+    old_operations = await user_old_operations_check(state)  # Последнее действие
+    if message.text:
+        text = message.text.replace(',', '.')
+        if is_float(text):
+            limit = float(text)
+            tg_id = int(message.from_user.id) if message.chat.type == 'private' else int(message.chat.id)
+            info_cat = await state.get_data()  # Получаем данные из FSM
+            id_cat = info_cat['id_category']  # Id записи
+            operator = info_cat['operators']  # e/i
+
+            new_limit = await update_limit(id_cat=id_cat,
+                                           tg_id=tg_id,
+                                           operator=operator,
+                                           new_limit=limit)
+
+            if new_limit:
+
+                if operator == 'e':
+                    category_user = await get_redis_data('categories_exp')  # Получаем категории расходов из Redis
+                elif operator == 'i':
+                    category_user = await get_redis_data('categories_inc')  # Получаем категории расходов из Redis
+
+                for item in category_user:
+                    if item[0] == int(id_cat):
+                        category = item[1]
+                        break
+
+                await message.answer(text='✅Название успешно изменено')
+
+            else:
+                await message.answer(text='УПС! Что то пошло не так')
+        else:
+            await message.answer(text='Вы ввели не текст')
+    else:
+        await message.answer(text='Вы ввели не текст')
+
+    await state.clear()
+    await state.update_data(user_check=True)
+    await state.update_data(old_operations=old_operations)
+
+
+def is_float(text):
+    try:
+        float_value = float(text)
+        return True
+    except ValueError:
+        return False

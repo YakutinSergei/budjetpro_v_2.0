@@ -3,7 +3,6 @@ import logging
 
 from aiogram import Bot
 from aiogram.types import BotCommand
-from aiogram_dialog import setup_dialogs
 
 from Handlers import start_handlers, financial_transactions_handlers, monthly_report_handlers, \
     personal_account_handlers, settings_handlers
@@ -54,7 +53,6 @@ async def main():
 
     # Пропускаем накопившиеся апдейты и запускаем polling
     await bot.delete_webhook(drop_pending_updates=True)
-    setup_dialogs(dp)
     dp.startup.register(set_main_menu)
     await dp.start_polling(bot)
 
