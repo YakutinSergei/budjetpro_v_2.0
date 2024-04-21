@@ -8,6 +8,7 @@ from data_base.orm import get_data_personal_bd
 router: Router = Router()
 
 
+@router.message(F.text == 'personal_account')
 @router.message(F.text == LEXICON_RU['personal_account_user'])
 async def add_finance_user(message: Message):
     tg_id = int(message.from_user.id) if message.chat.type == 'private' else int(message.chat.id)

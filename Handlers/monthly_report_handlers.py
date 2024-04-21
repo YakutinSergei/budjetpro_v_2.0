@@ -12,6 +12,7 @@ from create_bot import bot
 router: Router = Router()
 
 
+@router.message(F.text == '/report')
 @router.message(F.text == LEXICON_RU['report_month_user'])
 async def add_finance_user(message: Message):
     tg_id = int(message.from_user.id) if message.chat.type == 'private' else int(message.chat.id)
