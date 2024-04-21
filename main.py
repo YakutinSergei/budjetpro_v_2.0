@@ -22,7 +22,10 @@ async def set_main_menu(bot: Bot):
 
     # Создаем список с командами и их описанием для кнопки menu
     main_menu_commands = [
-        BotCommand(command='/start', description='Перезапустить бота')]
+        BotCommand(command='/start', description='Перезапустить бота'),
+        BotCommand(command='/report', description='Отчет за месяц'),
+        BotCommand(command='/personal_account', description='Отчет за месяц'),
+        BotCommand(command='/analytics', description='Анализ')]
 
     await bot.set_my_commands(main_menu_commands)
 
