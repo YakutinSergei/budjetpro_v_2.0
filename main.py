@@ -24,7 +24,7 @@ async def set_main_menu(bot: Bot):
     main_menu_commands = [
         BotCommand(command='/start', description='Перезапустить бота'),
         BotCommand(command='/report', description='Отчет за месяц'),
-        BotCommand(command='/personal_account', description='Отчет за месяц'),
+        BotCommand(command='/personal_account', description='Личный кабинет'),
         BotCommand(command='/analytics', description='Анализ')]
 
     await bot.set_my_commands(main_menu_commands)
