@@ -5,7 +5,7 @@ from aiogram import Bot
 from aiogram.types import BotCommand
 
 from Handlers import start_handlers, financial_transactions_handlers, monthly_report_handlers, \
-    personal_account_handlers, settings_handlers
+    personal_account_handlers, settings_handlers, paid_handlers
 from create_bot import bot, dp
 from environs import Env
 
@@ -45,10 +45,11 @@ async def main():
     await create_tables() # Создание таблиц
 
     # Регистриуем роутеры в диспетчере
-    dp.include_router(start_handlers.router)
     dp.include_router(personal_account_handlers.router)
     dp.include_router(monthly_report_handlers.router)
     dp.include_router(settings_handlers.router)
+    dp.include_router(paid_handlers.router)
+    dp.include_router(start_handlers.router)
     dp.include_router(financial_transactions_handlers.router)
 
 

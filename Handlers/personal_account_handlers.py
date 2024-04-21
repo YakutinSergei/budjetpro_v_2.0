@@ -41,5 +41,7 @@ async def add_finance_user(message: Message):
 
     await message.answer(text=text,
                          reply_markup= await create_inline_kb(1,
-                                                              'subscription_',
-                                                              LEXICON_RU['subscription']))
+                                                              'sub_',
+                                                              LEXICON_RU['planned_exp'],
+                                                              LEXICON_RU['subscription'],
+                                                              ))
