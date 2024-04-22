@@ -8,4 +8,4 @@ router: Router = Router()
 
 @router.callback_query(F.data.startswith('sub_'))
 async def add_finance_user(message: Message, state: FSMContext):
-    print('tut')
+    print('тут')
