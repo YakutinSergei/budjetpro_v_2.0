@@ -5,10 +5,11 @@ from difflib import SequenceMatcher
 import redis
 
 from data_base.database import async_session, engine_asinc, Base
-from sqlalchemy import select, func, update, extract, and_, delete
+from sqlalchemy import select, func, update, extract, delete
 from sqlalchemy.exc import IntegrityError
 
-from data_base.models import IncomesORM, UsersOrm, IncCategoryORM, ExpCategoryORM, ExpensesORM
+from data_base.models import (IncomesORM, UsersOrm, IncCategoryORM, ExpCategoryORM, ExpensesORM, PiggyBankORM,
+                              ActionsPiggyBankORM)
 
 
 async def create_tables():
@@ -905,3 +906,47 @@ async def del_category_bd(category_id: str,
     except IntegrityError as e:
         print(f"IntegrityError occurred: {e}")
         return False
+
+
+'''Получаем данные по копилке'''
+
+
+async def get_data_bank(tg_id: int):
+    try:
+        async with async_session() as session:
+            user_bank = await session.execute(select(PiggyBankORM.id, PiggyBankORM.auto_completion)
+                                              .join(UsersOrm, UsersOrm.id == PiggyBankORM.user_id)
+                                              .where(UsersOrm.tg_id == tg_id)
+                                              )
+            bank_id = user_bank.all()
+
+            if bank_id:
+                id_bank = bank_id[0][0]
+                bank_auto_renewal = bank_id[0][1]
+
+                bank_summ = await session.execute(select(func.sum(ActionsPiggyBankORM.summ))
+                                                  .where(ActionsPiggyBankORM.bank_id == id_bank)
+                                                  )
+
+                #print(bank_summ.scalar())
+                balance = bank_summ.scalar()
+                balance = balance if balance else 0
+                return {'balance': balance,
+                        'auto-renewal': bank_auto_renewal}
+            else:
+                user_id = await session.execute(select(UsersOrm.id)
+                                                .where(UsersOrm.tg_id == tg_id)
+                                                )
+                user_id = user_id.one()[0]
+                new_bank = PiggyBankORM(user_id=user_id)
+                await session.flush()
+                await session.commit()
+                return {'balance': 0,
+                        'auto-renewal': False}
+
+
+    except IntegrityError as e:
+        print(f"IntegrityError occurred: {e}")
+        return False
+
+# select(func.sum(ExpensesORM.summ), func.sum(ExpCategoryORM.limit_summ))

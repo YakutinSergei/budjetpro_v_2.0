@@ -15,7 +15,7 @@ from data_base.orm import add_cetegory_exp, add_cetegory_inc, check_and_add_user
     check_and_add_user_category_inc, delete_exp, delete_inc, get_exp_categories, get_inc_categories, update_dates_trans, \
     edit_comment, update_category_trans
 from module_functions.users_function import message_inc, print_message_choice_category, user_check, message_exp, \
-    user_old_operations_check, get_redis_data
+    user_old_operations_check, get_redis_data, message_inc_edit, message_exp_edit
 from create_bot import bot
 
 router: Router = Router()
@@ -205,25 +205,25 @@ async def choice_category(callback: CallbackQuery, state: FSMContext):
                                            amount=amount,
                                            category=category)
 
-        await bot.delete_message(chat_id=tg_id,
-                                 message_id=callback.message.message_id)
-
-        await message_inc(check_category=check_add,
-                          amount=amount,
-                          message=callback.message,
-                          state=state)
+        await message_inc_edit(check_category=check_add,
+                               message_id=callback.message.message_id,
+                               amount=amount,
+                               tg_id=tg_id,
+                               message=callback.message,
+                               state=state)
 
     elif operation == 'e':  # Категории расходов
         check_add = await add_cetegory_exp(tg_id=tg_id,
                                            amount=amount,
                                            category=category)
 
-        await bot.delete_message(chat_id=tg_id,
-                                 message_id=callback.message.message_id)
-        await message_exp(check_category=check_add,
-                          amount=amount,
-                          message=callback.message,
-                          state=state)
+
+        await message_exp_edit(check_category=check_add,
+                               message_id=callback.message.message_id,
+                               amount=amount,
+                               tg_id=tg_id,
+                               message=callback.message,
+                               state=state)
 
     await callback.answer()
 
@@ -693,4 +693,3 @@ async def process_choice_new_category(callback: CallbackQuery, state: FSMContext
 async def test_callback(callback: CallbackQuery):
     print(callback.data)
     await callback.answer()
-

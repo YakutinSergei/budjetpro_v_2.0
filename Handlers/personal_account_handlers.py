@@ -43,5 +43,6 @@ async def add_finance_user(message: Message):
                          reply_markup= await create_inline_kb(1,
                                                               'sub_',
                                                               LEXICON_RU['planned_exp'],
+                                                              LEXICON_RU['piggy_bank'],
                                                               LEXICON_RU['subscription'],
                                                               ))

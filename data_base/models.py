@@ -48,3 +48,21 @@ class ExpensesORM(Base):
     summ: Mapped[float] = mapped_column()
     date: Mapped[datetime.datetime] = mapped_column(server_default=text("TIMEZONE('utc', now())"))
     comment: Mapped[str]
+
+
+'''Таблица копилок'''
+
+class PiggyBankORM(Base):
+    __tablename__ = 'piggy_bank'
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
+    auto_completion: Mapped[bool] = mapped_column(default=False)
+    size_auto_completion: Mapped[int] = mapped_column(default=10)
+
+
+'''Таблица пополнений копилки'''
+class ActionsPiggyBankORM(Base):
+    __tablename__ = 'action_piggy_bank'
+    id: Mapped[int] = mapped_column(primary_key=True)
+    bank_id: Mapped[int] = mapped_column(ForeignKey("piggy_bank.id", ondelete="CASCADE"))
+    summ: Mapped[float]

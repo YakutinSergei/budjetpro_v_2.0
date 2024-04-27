@@ -88,6 +88,44 @@ async def message_exp(check_category: str,
     await state.update_data(old_operations=False)
 
 
+async def message_exp_edit(check_category: str,
+                           amount: float,
+                           message_id: int,
+                           tg_id: int,
+                           message: Message,
+                           state: FSMContext,
+                           comment: str = ''):
+    date_value = datetime.now()
+    # Извлекаем день, месяц и год из значения даты
+    day = date_value.day
+    month = date_value.month
+    year = date_value.year
+
+    id_fin = check_category.split('`')[-1]
+    name_cat = check_category.split('`')[0]
+
+    text = (f'✅Добавлено {amount} ₽ в категорию расходов "{name_cat}" \n'
+            f'Дата: <i>{day}/{month}/{year} г.</i>')
+
+    if comment != '':
+        comment = f'\n<i>{comment}</i>'
+
+    print(tg_id)
+    print(message.message_id)
+    await bot.edit_message_text(chat_id=tg_id,
+                                message_id=message_id,
+                                text=text + comment,
+                                reply_markup=await create_inline_kb(2,
+                                                                    f"Edit_e_{id_fin}_",
+                                                                    LEXICON_RU['date_fin'],
+                                                                    LEXICON_RU['comment'],
+                                                                    LEXICON_RU['change'],
+                                                                    LEXICON_RU['cancel_fin'],
+                                                                    ))
+
+    await state.update_data(old_operations=False)
+
+
 '''Функция вывода сообщение о том что добавлена новая запись в доходы'''
 
 
@@ -119,6 +157,43 @@ async def message_inc(check_category: str,
                                                              LEXICON_RU['change'],
                                                              LEXICON_RU['cancel_fin'],
                                                              ))
+
+    await state.update_data(old_operations=True)
+
+
+async def message_inc_edit(check_category: str,
+                           amount: float,
+                           message_id: int,
+                           tg_id: int,
+                           message: Message,
+                           state: FSMContext,
+                           comment: str = ''):
+
+    date_value = datetime.now()
+    # Извлекаем день, месяц и год из значения даты
+    day = date_value.day
+    month = date_value.month
+    year = date_value.year
+
+    id_fin = check_category.split('`')[-1]
+    name_cat = check_category.split('`')[0]
+
+    text = (f'✅Добавлено {amount} ₽ в источник доходов "{name_cat}" \n'
+            f'Дата: <i>{day}/{month}/{year} г.</i>')
+
+    if comment != '':
+        comment = f'\n<i>{comment}</i>'
+
+    await bot.edit_message_text(text=text + comment,
+                                chat_id=tg_id,
+                                message_id=message_id,
+                                reply_markup=await create_inline_kb(2,
+                                                                    f"Edit_i_{id_fin}_",
+                                                                    LEXICON_RU['date_fin'],
+                                                                    LEXICON_RU['comment'],
+                                                                    LEXICON_RU['change'],
+                                                                    LEXICON_RU['cancel_fin'],
+                                                                    ))
 
     await state.update_data(old_operations=True)
 
@@ -280,9 +355,10 @@ async def print_message_list_category(category: str, tg_id: int, callback: Callb
 
 
 '''Функция печати сообщения с выбором категорий для редактирования'''
+
+
 async def print_message_setting_categoryes(tg_id: int,
                                            callback: CallbackQuery):
-
     await bot.edit_message_text(text='📈Настройки категорий📉',
                                 chat_id=tg_id,
                                 message_id=callback.message.message_id,
