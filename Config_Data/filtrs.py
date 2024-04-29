@@ -5,6 +5,7 @@ from aiogram.types import Message, CallbackQuery
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 
+from create_bot import bot
 from data_base.database import async_session
 from data_base.models import UsersOrm
 
@@ -44,13 +45,13 @@ class PaidFiltersCallback(BaseFilter):
                 user = await session.execute(select(UsersOrm).filter(UsersOrm.tg_id == tg_id))
                 user = user.scalar_one_or_none()
                 if not user:
-                    return False
-
+                    await bot.send_message(text='Для продолжения нажмите /start')
                 # Проверяем подписку пользователя
                 if user.subscription >= datetime.now():
                     return True
                 else:
-                    return False
+                    await bot.send_message(text='💰Оформите подписку',
+                                           chat_id=tg_id)
         except IntegrityError as e:
             print(f"IntegrityError occurred: {e}")
 

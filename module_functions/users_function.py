@@ -110,8 +110,6 @@ async def message_exp_edit(check_category: str,
     if comment != '':
         comment = f'\n<i>{comment}</i>'
 
-    print(tg_id)
-    print(message.message_id)
     await bot.edit_message_text(chat_id=tg_id,
                                 message_id=message_id,
                                 text=text + comment,
