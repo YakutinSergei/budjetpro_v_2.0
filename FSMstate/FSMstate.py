@@ -15,3 +15,8 @@ class FSMsettings(StatesGroup):
     id_category = State()
     id_message = State()
     help = State()
+
+
+class FMSPiggyBank(StatesGroup):
+    replenish = State()  # Пополнить
+    bring_out = State()  # Вывести

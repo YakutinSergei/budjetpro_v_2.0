@@ -3,12 +3,9 @@ from datetime import datetime
 
 import redis
 from aiogram.fsm.context import FSMContext
-from aiogram.fsm.state import StatesGroup, State
 from aiogram.types import Message, CallbackQuery
 
 from Bot_menu.menu import create_inline_kb
-from FSMstate.FSMstate import FSMfinance
-from Handlers.start_handlers import process_start_command
 from Lexicon.lexicon_ru import LEXICON_RU
 from create_bot import bot
 from data_base.orm import check_user_exists, get_inc_categories, get_exp_categories

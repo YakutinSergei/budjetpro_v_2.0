@@ -918,9 +918,9 @@ async def get_data_bank(tg_id: int):
                                               .join(UsersOrm, UsersOrm.id == PiggyBankORM.user_id)
                                               .where(UsersOrm.tg_id == tg_id)
                                               )
-            bank_id = user_bank.all()
+            bank_id = user_bank.all()  # Получаем id банка и автопополнение
 
-            if bank_id:
+            if bank_id:  # Если есть банк
                 id_bank = bank_id[0][0]
                 bank_auto_renewal = bank_id[0][1]
 
@@ -928,7 +928,7 @@ async def get_data_bank(tg_id: int):
                                                   .where(ActionsPiggyBankORM.bank_id == id_bank)
                                                   )
 
-                #print(bank_summ.scalar())
+                # print(bank_summ.scalar())
                 balance = bank_summ.scalar()
                 balance = balance if balance else 0
                 return {'balance': balance,
@@ -939,7 +939,7 @@ async def get_data_bank(tg_id: int):
                                                 )
                 user_id = user_id.one()[0]
                 new_bank = PiggyBankORM(user_id=user_id)
-                await session.flush()
+                session.add(new_bank)
                 await session.commit()
                 return {'balance': 0,
                         'auto-renewal': False}
@@ -949,4 +949,34 @@ async def get_data_bank(tg_id: int):
         print(f"IntegrityError occurred: {e}")
         return False
 
+
 # select(func.sum(ExpensesORM.summ), func.sum(ExpCategoryORM.limit_summ))
+'''Пополнение копилки'''
+
+
+async def add_piggy_bank(tg_id: int,
+                         amount: float):
+    try:
+        async with async_session() as session:
+            user_bank = await session.execute(select(PiggyBankORM.id, PiggyBankORM.auto_completion)
+                                              .join(UsersOrm, UsersOrm.id == PiggyBankORM.user_id)
+                                              .where(UsersOrm.tg_id == tg_id)
+                                              )
+            bank_id = user_bank.all()  # Получаем id банка и автопополнение
+
+            if bank_id:
+                id_bank = bank_id[0][0]
+
+                new_action_bank = ActionsPiggyBankORM(bank_id=id_bank,
+                                                      summ=amount)
+                session.add(new_action_bank)
+
+                await session.commit()
+
+            else:
+                return False
+
+
+    except IntegrityError as e:
+        print(f"IntegrityError occurred: {e}")
+        return False

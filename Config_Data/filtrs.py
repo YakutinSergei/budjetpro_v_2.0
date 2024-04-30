@@ -45,6 +45,7 @@ class PaidFiltersCallback(BaseFilter):
                 user = await session.execute(select(UsersOrm).filter(UsersOrm.tg_id == tg_id))
                 user = user.scalar_one_or_none()
                 if not user:
+                    await callback.answer()
                     await bot.send_message(text='Для продолжения нажмите /start')
                 # Проверяем подписку пользователя
                 if user.subscription >= datetime.now():
@@ -52,6 +53,9 @@ class PaidFiltersCallback(BaseFilter):
                 else:
                     await bot.send_message(text='💰Оформите подписку',
                                            chat_id=tg_id)
+                    await callback.answer()
+
+
         except IntegrityError as e:
             print(f"IntegrityError occurred: {e}")
 

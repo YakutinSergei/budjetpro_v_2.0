@@ -10,6 +10,7 @@ from aiogram.fsm.state import StatesGroup, State
 from aiogram.types import Message, CallbackQuery
 
 from Bot_menu.menu import create_inline_kb, kb_date_order, kb_day_order, kb_month_order, kb_year_order
+from FSMstate.FSMstate import FMSPiggyBank
 from Lexicon.lexicon_ru import LEXICON_RU
 from data_base.orm import add_cetegory_exp, add_cetegory_inc, check_and_add_user_category_exp, \
     check_and_add_user_category_inc, delete_exp, delete_inc, get_exp_categories, get_inc_categories, update_dates_trans, \
@@ -31,7 +32,7 @@ class FSMfinance(StatesGroup):
 # region Обработка сообщения от пользователя
 
 
-@router.message(~StateFilter(FSMfinance.operation))
+@router.message(~StateFilter(FSMfinance.operation) and ~StateFilter(FMSPiggyBank.replenish))
 async def add_finance_user(message: Message, state: FSMContext):
     tg_id = int(message.from_user.id) if message.chat.type == 'private' else int(message.chat.id)
 
@@ -216,7 +217,6 @@ async def choice_category(callback: CallbackQuery, state: FSMContext):
         check_add = await add_cetegory_exp(tg_id=tg_id,
                                            amount=amount,
                                            category=category)
-
 
         await message_exp_edit(check_category=check_add,
                                message_id=callback.message.message_id,
@@ -688,8 +688,8 @@ async def process_choice_new_category(callback: CallbackQuery, state: FSMContext
 
         # endregion
 
-
-@router.callback_query()
-async def test_callback(callback: CallbackQuery):
-    print(callback.data)
-    await callback.answer()
+#
+# @router.callback_query()
+# async def test_callback(callback: CallbackQuery):
+#     print(callback.data)
+#     await callback.answer()
