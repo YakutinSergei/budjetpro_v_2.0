@@ -32,8 +32,12 @@ class FSMfinance(StatesGroup):
 # region Обработка сообщения от пользователя
 
 
-@router.message(~StateFilter(FSMfinance.operation) and ~StateFilter(FMSPiggyBank.replenish))
+@router.message(~StateFilter(FSMfinance.operation, FMSPiggyBank.replenish))
+
+# @router.message(~StateFilter(FSMfinance.operation) and ~StateFilter(FMSPiggyBank.replenish))
+# А как сделать что бы роутер срабатывал только когда вообще нет состояния?
 async def add_finance_user(message: Message, state: FSMContext):
+    print('тут')
     tg_id = int(message.from_user.id) if message.chat.type == 'private' else int(message.chat.id)
 
     FSM_state_check = await user_check(message=message, state=state,
@@ -591,6 +595,7 @@ async def process_done_date_expenses(callback: CallbackQuery):
 @router.message(StateFilter(FSMfinance.operation))
 async def process_enter_comment(message: Message, state: FSMContext):
     mailing = await state.get_data()  # Получаем данные из FSM
+    print(mailing)
     id_record = int(mailing['id_record'])  # ID записи в базе данных
     text = mailing['text'].split('\n')[0] + '\n' + mailing['text'].split('\n')[1]  # Текст предыдущего сообщения
     id_message = mailing['id_message']  # ID сообщения в чате

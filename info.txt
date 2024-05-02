@@ -16,3 +16,6 @@
 Удалить категорию
 Изменить плановую сумму
 Назад
+
+
+sudo systemctl start redis-server

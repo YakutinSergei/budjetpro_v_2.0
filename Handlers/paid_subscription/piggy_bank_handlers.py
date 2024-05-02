@@ -32,7 +32,12 @@ async def add_finance_user(callback: CallbackQuery):
 async def cancelFSM(callback: CallbackQuery, state: FSMContext):
     await callback.message.edit_text(text=LEXICON_RU['cancel_text'])
     await callback.answer()
+
+    mailing = await state.get_data()  # Получаем данные из FSM
     await state.clear()
+    old_operations = mailing['old_operations']  # Последнее действие
+    await state.update_data(user_check=True)
+    await state.update_data(old_operations=old_operations)
 
 '''Выбор что мы хотим сделать'''
 
