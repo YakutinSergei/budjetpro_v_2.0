@@ -75,7 +75,10 @@ LEXICON_RU: dict[str, str] = {
     'replenish': '➕Пополнить',
     'bring_out': '➖Вывести',
     'replenish_text': '💴Введите сумму пополнения',
+    'bring_out_text': '💴Введите сумму',
     'cancel_text': '🚫Отмена ввода',
+    'auto-completion': '🔄Автопополнение',
+    'percent': 'Процент пополнения',
 
 
     'set_category': '📈Категории📉',

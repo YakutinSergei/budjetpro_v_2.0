@@ -32,7 +32,9 @@ class FSMfinance(StatesGroup):
 # region Обработка сообщения от пользователя
 
 
-@router.message(~StateFilter(FSMfinance.operation, FMSPiggyBank.replenish))
+@router.message(~StateFilter(FSMfinance.operation,
+                             FMSPiggyBank.replenish,
+                             FMSPiggyBank.bring_out))
 
 # @router.message(~StateFilter(FSMfinance.operation) and ~StateFilter(FMSPiggyBank.replenish))
 # А как сделать что бы роутер срабатывал только когда вообще нет состояния?
@@ -152,7 +154,6 @@ async def add_finance_user(message: Message, state: FSMContext):
 
                 else:
                     s = await state.get_data()
-                    print(s)
                     operations_check = await user_old_operations_check(
                         state=state)  # проверка последнего действия (Расходы/Доходы)
 
@@ -595,13 +596,10 @@ async def process_done_date_expenses(callback: CallbackQuery):
 @router.message(StateFilter(FSMfinance.operation))
 async def process_enter_comment(message: Message, state: FSMContext):
     mailing = await state.get_data()  # Получаем данные из FSM
-    print(mailing)
     id_record = int(mailing['id_record'])  # ID записи в базе данных
     text = mailing['text'].split('\n')[0] + '\n' + mailing['text'].split('\n')[1]  # Текст предыдущего сообщения
     id_message = mailing['id_message']  # ID сообщения в чате
     operation = mailing['operation']
-
-    old_operations = mailing['old_operations']  # Последнее действие
 
     tg_id = int(message.from_user.id) if message.chat.type == 'private' else int(message.chat.id)
 
@@ -638,9 +636,7 @@ async def process_enter_comment(message: Message, state: FSMContext):
     else:
         await message.answer(text='❌К сожалению комментарий не был добавлен')
 
-    await state.clear()
-    await state.update_data(user_check=True)
-    await state.update_data(old_operations=old_operations)
+    await state.set_state(state=None)
 
 
 '''Выбор новой категории EditCategory_i_💳Зарплата'''

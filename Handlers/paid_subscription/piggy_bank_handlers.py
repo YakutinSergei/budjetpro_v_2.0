@@ -6,6 +6,7 @@ from aiogram.types import CallbackQuery, Message
 from Bot_menu.menu import create_inline_kb
 from FSMstate.FSMstate import FMSPiggyBank
 from Lexicon.lexicon_ru import LEXICON_RU
+from create_bot import bot
 from data_base.orm import get_data_bank, add_piggy_bank
 
 router: Router = Router()
@@ -28,21 +29,20 @@ async def add_finance_user(callback: CallbackQuery):
 
 '''Кнопка отмены ввода'''
 
+
 @router.callback_query(F.data.startswith(f'cancelFSM_'))
 async def cancelFSM(callback: CallbackQuery, state: FSMContext):
     await callback.message.edit_text(text=LEXICON_RU['cancel_text'])
     await callback.answer()
+    await state.set_state(state=None)
 
-    mailing = await state.get_data()  # Получаем данные из FSM
-    await state.clear()
-    old_operations = mailing['old_operations']  # Последнее действие
-    await state.update_data(user_check=True)
-    await state.update_data(old_operations=old_operations)
 
 '''Выбор что мы хотим сделать'''
 
+
 @router.callback_query(F.data.startswith(f'bank_'))
 async def piggy_bank_process(callback: CallbackQuery, state: FSMContext):
+    tg_id = int(callback.from_user.id) if callback.message.chat.type == 'private' else int(callback.message.chat.id)
     event = callback.data.split('_')[-1]
     if event == LEXICON_RU['replenish']:  # Пополнить
         await state.set_state(FMSPiggyBank.replenish)
@@ -52,13 +52,23 @@ async def piggy_bank_process(callback: CallbackQuery, state: FSMContext):
                                                                              LEXICON_RU['cancel']))
 
     elif event == LEXICON_RU['bring_out']:  # Вывести
-        pass
+        await state.set_state(FMSPiggyBank.bring_out)
+        await callback.message.edit_text(text=LEXICON_RU['replenish_text'],
+                                         reply_markup=await create_inline_kb(1,
+                                                                             'cancelFSM_',
+                                                                             LEXICON_RU['cancel']))
     elif event == LEXICON_RU['settings_user']:  # Настройки
-        pass
-    print(callback.data)
+        await bot.edit_message_reply_markup(chat_id=tg_id,
+                                            message_id=callback.message.message_id,
+                                            reply_markup=await create_inline_kb(1,
+                                                                                'setPing_',
+                                                                                LEXICON_RU['auto-completion'],
+                                                                                LEXICON_RU['auto-completion'],
+                                                                                ))
 
 
 '''Ввод суммы пополнения'''
+
 
 @router.message(StateFilter(FMSPiggyBank.replenish))
 async def process_enter_comment(message: Message, state: FSMContext):
@@ -67,12 +77,35 @@ async def process_enter_comment(message: Message, state: FSMContext):
         tg_id = int(message.from_user.id) if message.chat.type == 'private' else int(message.chat.id)
 
         await add_piggy_bank(tg_id=tg_id,
-                             amount=float(text))
+                             amount=abs(float(text)))
 
         await message.answer(text='✅ Копилка пополнена')
-        await state.clear()
+
+        await state.set_state(state=None)
     else:
         await message.answer(text='🤦🏼‍♂️Вы ввели не число')
+
+
+'''Ввод суммы вывода'''
+
+
+@router.message(StateFilter(FMSPiggyBank.bring_out))
+async def process_enter_comment(message: Message, state: FSMContext):
+    text = message.text.replace(',', '.')
+    if can_convert_to_float(text):
+        tg_id = int(message.from_user.id) if message.chat.type == 'private' else int(message.chat.id)
+
+        await add_piggy_bank(tg_id=tg_id,
+                             amount=-abs(float(text)))
+
+        await message.answer(text='✅ Средства выведены')
+
+        await state.set_state(state=None)
+    else:
+        await message.answer(text='🤦🏼‍♂️Вы ввели не число')
+
+
+'''Кнопка настройки копилки'''
 
 
 def can_convert_to_float(value):
