@@ -58,13 +58,27 @@ async def piggy_bank_process(callback: CallbackQuery, state: FSMContext):
                                                                              'cancelFSM_',
                                                                              LEXICON_RU['cancel']))
     elif event == LEXICON_RU['settings_user']:  # Настройки
-        await bot.edit_message_reply_markup(chat_id=tg_id,
-                                            message_id=callback.message.message_id,
-                                            reply_markup=await create_inline_kb(1,
-                                                                                'setPing_',
-                                                                                LEXICON_RU['auto-completion'],
-                                                                                LEXICON_RU['auto-completion'],
-                                                                                ))
+        my_piggy = await get_data_bank(tg_id)  # Получаем данные о копилке
+
+        if my_piggy['auto-renewal']: # Если включено автопополнение
+            auto_renewal = 'Подключено✅'
+            auto_renewal_kb = '✅'
+        else:
+            auto_renewal = 'Отключено❌'
+            auto_renewal_kb = '❌'
+
+        text = (f'Автопополнение: {auto_renewal}\n'
+                f'Размер автопополнения: {my_piggy["size_auto-completion"]} %')
+
+        await bot.edit_message_text(text=text,
+                                    chat_id=tg_id,
+                                    message_id=callback.message.message_id,
+                                    reply_markup=await create_inline_kb(1,
+                                                                        'setPing_',
+                                                                        LEXICON_RU['auto-completion']+auto_renewal_kb,
+                                                                        LEXICON_RU['auto-completion'],
+                                                                        LEXICON_RU['percent']
+                                                                        ))
 
 
 '''Ввод суммы пополнения'''
@@ -106,6 +120,16 @@ async def process_enter_comment(message: Message, state: FSMContext):
 
 
 '''Кнопка настройки копилки'''
+
+
+@router.callback_query(F.data.startswith(f'setPing_'))
+async def piggy_bank_process(callback: CallbackQuery, state: FSMContext):
+    tg_id = int(callback.from_user.id) if callback.message.chat.type == 'private' else int(callback.message.chat.id)
+    action = callback.data.split("_")[-1]
+    my_piggy = await get_data_bank(tg_id)  # Получаем данные о копилке
+
+    text = (f'Автопополнение: {my_piggy["auto-renewal"]}\n'
+            f'Размер автопополнения: {my_piggy["size_auto-completion"]} %')
 
 
 def can_convert_to_float(value):

@@ -914,7 +914,9 @@ async def del_category_bd(category_id: str,
 async def get_data_bank(tg_id: int):
     try:
         async with async_session() as session:
-            user_bank = await session.execute(select(PiggyBankORM.id, PiggyBankORM.auto_completion)
+            user_bank = await session.execute(select(PiggyBankORM.id,
+                                                     PiggyBankORM.auto_completion,
+                                                     PiggyBankORM.size_auto_completion)
                                               .join(UsersOrm, UsersOrm.id == PiggyBankORM.user_id)
                                               .where(UsersOrm.tg_id == tg_id)
                                               )
@@ -923,6 +925,7 @@ async def get_data_bank(tg_id: int):
             if bank_id:  # Если есть банк
                 id_bank = bank_id[0][0]
                 bank_auto_renewal = bank_id[0][1]
+                size_auto_completion = bank_id[0][2]
 
                 bank_summ = await session.execute(select(func.sum(ActionsPiggyBankORM.summ))
                                                   .where(ActionsPiggyBankORM.bank_id == id_bank)
@@ -932,7 +935,8 @@ async def get_data_bank(tg_id: int):
                 balance = bank_summ.scalar()
                 balance = balance if balance else 0
                 return {'balance': balance,
-                        'auto-renewal': bank_auto_renewal}
+                        'auto-renewal': bank_auto_renewal,
+                        'size_auto-completion': size_auto_completion}
             else:
                 user_id = await session.execute(select(UsersOrm.id)
                                                 .where(UsersOrm.tg_id == tg_id)
@@ -942,7 +946,8 @@ async def get_data_bank(tg_id: int):
                 session.add(new_bank)
                 await session.commit()
                 return {'balance': 0,
-                        'auto-renewal': False}
+                        'auto-renewal': False,
+                        'size_auto-completion': 10}
 
 
     except IntegrityError as e:
