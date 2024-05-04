@@ -368,6 +368,8 @@ async def edit_transaction(callback: CallbackQuery, state: FSMContext):
 
 @router.callback_query(F.data.startswith('cur_'))
 async def process_choice_date(callback: CallbackQuery):
+    tg_id = int(callback.from_user.id) if callback.message.chat.type == 'private' else int(callback.message.chat.id)
+
     date_chance = callback.data.split('_')[-1]
 
     category = callback.data.split('_')[1]  # Доход или расход (e/i)
@@ -380,7 +382,7 @@ async def process_choice_date(callback: CallbackQuery):
     if date_chance == 'day':
         first_day_of_month_weekday_index = calendar.monthrange(year_order, month_order)[0]  # какой сейчас день недели
         count_day_month = calendar.monthrange(year_order, month_order)[1]  # Количество дней в месяце
-        await bot.edit_message_reply_markup(chat_id=callback.from_user.id,
+        await bot.edit_message_reply_markup(chat_id=tg_id,
                                             message_id=callback.message.message_id,
                                             reply_markup=await kb_day_order(index_day=first_day_of_month_weekday_index,
                                                                             count_day_month=count_day_month,
@@ -388,14 +390,14 @@ async def process_choice_date(callback: CallbackQuery):
                                                                             cat=category,
                                                                             date=date))
     elif date_chance == 'month':
-        await bot.edit_message_reply_markup(chat_id=callback.from_user.id,
+        await bot.edit_message_reply_markup(chat_id=tg_id,
                                             message_id=callback.message.message_id,
                                             reply_markup=await kb_month_order(id_trans=id_trans,
                                                                               cat=category,
                                                                               date=date))
 
     else:
-        await bot.edit_message_reply_markup(chat_id=callback.from_user.id,
+        await bot.edit_message_reply_markup(chat_id=tg_id,
                                             message_id=callback.message.message_id,
                                             reply_markup=await kb_year_order(id_trans=id_trans,
                                                                              cat=category,
