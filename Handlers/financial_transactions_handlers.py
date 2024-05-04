@@ -508,7 +508,7 @@ async def process_year_choice(callback: CallbackQuery):
 
 @router.callback_query(F.data.startswith('backDateOrder_'))
 async def process_day_choice(callback: CallbackQuery):
-    tg_id = int(callback.from_user.id) if callback.message.chat.type == 'private' else int(callback.chat.id)
+    tg_id = int(callback.from_user.id) if callback.message.chat.type == 'private' else int(callback.message.chat.id)
 
     data = callback.data.split('_')[-1]  # Дата
     year_order = data.split('/')[2]  # Год
