@@ -412,7 +412,7 @@ async def process_choice_date(callback: CallbackQuery):
 async def process_day_choice(callback: CallbackQuery):
     day_order_new = callback.data.split('_')[-1]  # День который выбрал пользователь
 
-    tg_id = int(callback.from_user.id) if callback.message.chat.type == 'private' else int(callback.chat.id)
+    tg_id = int(callback.from_user.id) if callback.message.chat.type == 'private' else int(callback.message.chat.id)
 
     data = callback.data.split('_')[-2]  # Дата
     month_order = data.split('/')[1]  # месяц
@@ -441,7 +441,7 @@ async def process_day_choice(callback: CallbackQuery):
 @router.callback_query(F.data.startswith('chMon_'))
 async def process_month_choice(callback: CallbackQuery):
     month_order_new = callback.data.split('_')[-1]  # Месяц который выбрал пользователь
-    tg_id = int(callback.from_user.id) if callback.message.chat.type == 'private' else int(callback.chat.id)
+    tg_id = int(callback.from_user.id) if callback.message.chat.type == 'private' else int(callback.message.chat.id)
 
     data = callback.data.split('_')[-2]  # Дата
     year_order = data.split('/')[2]  # Год
@@ -476,7 +476,7 @@ async def process_month_choice(callback: CallbackQuery):
 @router.callback_query(F.data.startswith('chYear_'))
 async def process_year_choice(callback: CallbackQuery):
     year_order_new = callback.data.split('_')[-1]  # Год который выбрал пользователь
-    tg_id = int(callback.from_user.id) if callback.message.chat.type == 'private' else int(callback.chat.id)
+    tg_id = int(callback.from_user.id) if callback.message.chat.type == 'private' else int(callback.message.chat.id)
 
     data = callback.data.split('_')[-2]  # Дата
     month_order = data.split('/')[1]  # месяц
@@ -540,7 +540,7 @@ async def process_cancel_date(callback: CallbackQuery):
     category = callback.data.split('_')[1]  # Доход или расход (e/i)
     id_trans = callback.data.split('_')[2]  # id транзакции в базе данных
 
-    tg_id = int(callback.from_user.id) if callback.message.chat.type == 'private' else int(callback.chat.id)
+    tg_id = int(callback.from_user.id) if callback.message.chat.type == 'private' else int(callback.message.chat.id)
 
     await bot.edit_message_reply_markup(chat_id=tg_id,
                                         message_id=callback.message.message_id,
@@ -564,7 +564,7 @@ async def process_done_date_expenses(callback: CallbackQuery):
 
     date = callback.data.split('_')[-1]  # Дата
 
-    tg_id = int(callback.from_user.id) if callback.message.chat.type == 'private' else int(callback.chat.id)
+    tg_id = int(callback.from_user.id) if callback.message.chat.type == 'private' else int(callback.message.chat.id)
 
     text_trans = callback.message.text.split("\n")[0]
     text_data = callback.message.text.split("\n")[1].split(':')[0]
