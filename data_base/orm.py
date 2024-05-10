@@ -247,7 +247,7 @@ async def check_and_add_user_category_exp(tg_id: int,
 
             if category:
                 for item in categorys:
-                    if (SequenceMatcher(None, category.lower(), item.lower()).ratio() * 100) > 85:
+                    if (SequenceMatcher(None, category.lower(), item.lower()).ratio() * 100) > 80:
                         categories_id = await session.execute(
                             select(ExpCategoryORM.id)
                             .join(UsersOrm, UsersOrm.id == ExpCategoryORM.user_id)
