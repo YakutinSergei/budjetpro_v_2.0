@@ -634,7 +634,28 @@ async def get_data_personal_bd(tg_id: int):
 
             total_expenses = total_expenses.scalar() or 0
 
-            user_summary['balance'] = total_incomes - total_expenses
+            # Вычисляем копилку, были ли автопоплнения
+            user_bank = await session.execute(select(PiggyBankORM.id)
+                                              .join(UsersOrm, UsersOrm.id == PiggyBankORM.user_id)
+                                              .where(UsersOrm.tg_id == tg_id)
+                                              )
+
+            bank_id = user_bank.scalar_one_or_none()  # Получаем id банка и автопополнение
+
+            if bank_id:  # Если есть банк
+                # Считаем сумму пополнений которые были через автопополнение
+                bank_summ = await session.execute(select(func.sum(ActionsPiggyBankORM.summ))
+                                                  .where(ActionsPiggyBankORM.bank_id == bank_id)
+                                                  .where(ActionsPiggyBankORM.auto_completion==True)
+                                                  )
+
+                # print(bank_summ.scalar())
+                total_bank = bank_summ.scalar() or 0
+
+            else:
+                total_bank = 0
+
+            user_summary['balance'] = total_incomes - total_expenses - total_bank
 
             # Вычисляем сумму всех доходов и расходов
             user_summary['total_incomes'] = total_incomes
@@ -960,7 +981,8 @@ async def get_data_bank(tg_id: int):
 
 
 async def add_piggy_bank(tg_id: int,
-                         amount: float):
+                         amount: float,
+                         auto_completion: bool = False):
     try:
         async with async_session() as session:
             user_bank = await session.execute(select(PiggyBankORM.id, PiggyBankORM.auto_completion)
@@ -973,7 +995,8 @@ async def add_piggy_bank(tg_id: int,
                 id_bank = bank_id[0][0]
 
                 new_action_bank = ActionsPiggyBankORM(bank_id=id_bank,
-                                                      summ=amount)
+                                                      summ=amount,
+                                                      auto_completion=auto_completion)
                 session.add(new_action_bank)
 
                 await session.commit()
