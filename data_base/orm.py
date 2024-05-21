@@ -228,7 +228,7 @@ async def get_inc_categories(tg_id: int) -> list:
         print(IntegrityError)
 
 
-'''Проверка есть ли такая категория расходов и если есть то добавляем'''
+'''Проверка есть ли такая категория расходов и если есть то добавляем в расход'''
 
 
 async def check_and_add_user_category_exp(tg_id: int,
@@ -275,7 +275,7 @@ async def check_and_add_user_category_exp(tg_id: int,
         print(IntegrityError)
 
 
-'''Проверка есть ли такая статья доходов и если есть то добавляем'''
+'''Проверка есть ли такая статья доходов и если есть то добавляем доход'''
 
 
 async def check_and_add_user_category_inc(tg_id: int,
@@ -644,13 +644,15 @@ async def get_data_personal_bd(tg_id: int):
 
             if bank_id:  # Если есть банк
                 # Считаем сумму пополнений которые были через автопополнение
+                print(f'{bank_id=}')
                 bank_summ = await session.execute(select(func.sum(ActionsPiggyBankORM.summ))
                                                   .where(ActionsPiggyBankORM.bank_id == bank_id)
-                                                  .where(ActionsPiggyBankORM.auto_completion==True)
+                                                  .where(ActionsPiggyBankORM.auto_completion == True)
                                                   )
 
-                # print(bank_summ.scalar())
-                total_bank = bank_summ.scalar() or 0
+                print(f'{bank_summ.scalar()=}')
+                bank_money = bank_summ.scalar()
+                total_bank = bank_money if bank_money is not None else 0
 
             else:
                 total_bank = 0
