@@ -1,3 +1,5 @@
+import matplotlib.pyplot as plt
+import io
 import json
 from datetime import datetime
 from difflib import SequenceMatcher
@@ -529,8 +531,6 @@ async def update_category_trans(operation: str,
 
 
 '''Функция вывода отчета за месяц'''
-
-
 async def get_finances_by_month(tg_id: int,
                                 month: int,
                                 year: int):

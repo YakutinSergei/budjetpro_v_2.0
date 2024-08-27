@@ -1,3 +1,9 @@
+import io
+import os
+from sys import path_hooks
+
+from aiogram.types import FSInputFile
+
 from datetime import datetime
 
 from aiogram import Router, F
@@ -10,6 +16,8 @@ from module_functions.users_function import get_text_message
 from create_bot import bot
 
 router: Router = Router()
+
+
 
 
 @router.message(F.text == '/report')

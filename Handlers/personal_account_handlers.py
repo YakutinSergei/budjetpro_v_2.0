@@ -15,6 +15,8 @@ async def add_finance_user(message: Message):
 
     data_personal = await get_data_personal_bd(tg_id=tg_id)
 
+    print(data_personal)  # Проверка
+
     balance = '{:,}'.format(data_personal["balance"]).replace(',', ' ')  # Баланс
     total_incomes = '{:,}'.format(data_personal["total_incomes"]).replace(',', ' ')  # Сумма доходов
     total_expenses = '{:,}'.format(data_personal["total_expenses"]).replace(',', ' ')  # Сумма расходов
